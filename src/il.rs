@@ -101,7 +101,7 @@ impl Statement {
     pub(crate) fn procedure(ps: ProcedureStatement) -> Statement {
         Statement::Procedure(ps)
     }
-    pub(crate) fn compount(cs: CompoundStatement) -> Statement {
+    pub(crate) fn compound(cs: CompoundStatement) -> Statement {
         Statement::Compound(cs)
     }
 }
