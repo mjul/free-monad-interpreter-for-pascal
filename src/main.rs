@@ -1,3 +1,6 @@
+mod front_end;
+mod il;
+
 fn main() {
-    println!("Hello, world!");
+    println!("Parsing...");
 }
