@@ -12,7 +12,7 @@ use std::fmt::{Debug, Display, Formatter};
 ///     writeLn('Hello, World!')
 /// end.
 /// ```
-struct ProgramExpr {
+pub(crate) struct ProgramExpr {
     id: Id,
     identifier_list: IdentifierList,
     declarations: DeclarationsExpr,
@@ -39,19 +39,19 @@ impl ProgramExpr {
 }
 
 /// Non-empty list of identifiers
-struct IdentifierList(NonEmptyVec<Id>);
+pub(crate) struct IdentifierList(NonEmptyVec<Id>);
 
 impl IdentifierList {
     fn new_single(id: Id) -> Self {
         Self::new(NonEmptyVec::single(id))
     }
-    fn new(identifiers: NonEmptyVec<Id>) -> Self {
+    pub(crate) fn new(identifiers: NonEmptyVec<Id>) -> Self {
         Self(identifiers)
     }
 }
 
 // TODO: elaborate on this
-struct DeclarationsExpr();
+pub(crate) struct DeclarationsExpr();
 
 impl DeclarationsExpr {
     pub fn empty() -> Self {
@@ -59,7 +59,7 @@ impl DeclarationsExpr {
     }
 }
 
-struct SubprogramDeclarations(Vec<SubprogramDeclaration>);
+pub(crate) struct SubprogramDeclarations(Vec<SubprogramDeclaration>);
 
 impl SubprogramDeclarations {
     /// Create an empty [SubprogramDeclarations]
@@ -72,10 +72,10 @@ impl SubprogramDeclarations {
     }
 }
 
-struct SubprogramDeclaration {}
+pub(crate) struct SubprogramDeclaration {}
 
 /// A compound statement consisting of a `begin` and `end` block containing zero or more statements.
-struct CompoundStatement(Vec<Statement>);
+pub(crate) struct CompoundStatement(Vec<Statement>);
 
 impl CompoundStatement {
     pub(crate) fn new(optional_statements: Vec<Statement>) -> Self {
@@ -83,7 +83,7 @@ impl CompoundStatement {
     }
 }
 
-enum Statement {
+pub(crate) enum Statement {
     // TODO: variable assignment
     Procedure(ProcedureStatement),
     Compound(CompoundStatement),
@@ -106,7 +106,7 @@ impl Statement {
     }
 }
 
-struct ProcedureStatement(Id, Option<ExpressionList>);
+pub(crate) struct ProcedureStatement(Id, Option<ExpressionList>);
 
 impl ProcedureStatement {
     pub(crate) fn new(id: Id) -> Self {
@@ -117,16 +117,16 @@ impl ProcedureStatement {
     }
 }
 
-struct NonEmptyVec<T>(Vec<T>);
+pub(crate) struct NonEmptyVec<T>(Vec<T>);
 
 impl<T> NonEmptyVec<T> {
     /// Create a non-empty vector containing a single item.
-    fn single(item: T) -> NonEmptyVec<T> {
+    pub(crate) fn single(item: T) -> NonEmptyVec<T> {
         NonEmptyVec(vec![item])
     }
 
     // TODO: a proper error type
-    fn new(xs: Vec<T>) -> Result<Self, ()> {
+    pub(crate) fn new(xs: Vec<T>) -> Result<Self, ()> {
         match xs.len() {
             0 => Err(()),
             _ => Ok(Self(xs)),
@@ -135,7 +135,7 @@ impl<T> NonEmptyVec<T> {
 }
 
 /// A non-empty list of expressions
-struct ExpressionList(NonEmptyVec<Expression>);
+pub(crate) struct ExpressionList(NonEmptyVec<Expression>);
 
 impl ExpressionList {
     /// Create a new [ExpressionList] from a non-empty vector of [Expression]s
@@ -144,46 +144,46 @@ impl ExpressionList {
     }
 }
 
-enum Expression {
+pub(crate) enum Expression {
     Simple(Box<SimpleExpression>),
     Relation(Box<SimpleExpression>, RelOp, Box<SimpleExpression>),
 }
 
 impl Expression {
-    fn simple(simple_expression: SimpleExpression) -> Self {
+    pub(crate) fn simple(simple_expression: SimpleExpression) -> Self {
         Self::Simple(Box::new(simple_expression))
     }
 }
 
-enum RelOp {
+pub(crate) enum RelOp {
     Equal,
     NotEqual,
     // TODO: elaborate < > <= >=
 }
 
-enum SimpleExpression {
+pub(crate) enum SimpleExpression {
     Term(Term),
     // TODO: SignTerm(Sign, Term),
     // TODO: AddTerm(SimpleExpression, AddOp, Term),
 }
 
 impl SimpleExpression {
-    fn term(term: Term) -> Self {
+    pub(crate) fn term(term: Term) -> Self {
         Self::Term(term)
     }
 }
 
-enum Term {
+pub(crate) enum Term {
     Factor(Factor),
 }
 
 impl Term {
-    fn factor(factor: Factor) -> Self {
+    pub(crate) fn factor(factor: Factor) -> Self {
         Self::Factor(factor)
     }
 }
 
-enum Factor {
+pub(crate) enum Factor {
     Id(Id),
     IdWithParams(Id, ExpressionList),
     Number(i32),
@@ -195,17 +195,17 @@ enum Factor {
 }
 
 impl Factor {
-    fn string(s: &str) -> Self {
+    pub(crate) fn string(s: &str) -> Self {
         Self::String(String::from(s))
     }
 }
 
-enum Sign {
+pub(crate) enum Sign {
     Plus,
     Minus,
 }
 
-enum AddOp {
+pub(crate) enum AddOp {
     Plus,
     Minus,
     Or,
@@ -213,7 +213,7 @@ enum AddOp {
 
 /// Error representing an invalid tokens
 #[derive(Debug)]
-enum TokenError {
+pub(crate) enum TokenError {
     InvalidIdentifier(String),
 }
 
@@ -226,10 +226,10 @@ impl Display for TokenError {
 impl Error for TokenError {}
 
 /// Identifier
-struct Id(String);
+pub(crate) struct Id(String);
 
 impl Id {
-    fn new_from_str(id: &str) -> Result<Id, TokenError> {
+    pub(crate) fn new_from_str(id: &str) -> Result<Id, TokenError> {
         let starts_with_letter = id
             .chars()
             .next()
