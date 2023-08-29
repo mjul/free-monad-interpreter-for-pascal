@@ -25,30 +25,30 @@ pub(crate) fn pretty_print(program: ProgramExpr, indent: usize) -> String {
 /// Interpret the print-language program.
 ///
 /// Compare to the Haskell signature: `PrintProgram<'a> -> 'a`
-fn interpret_print_program(pp: &PrintProgram<PrettyPrintContext>, ctx: PrettyPrintContext) -> PrettyPrintContext {
+fn interpret_print_program(
+    pp: &PrintProgram<PrettyPrintContext>,
+    ctx: PrettyPrintContext,
+) -> PrettyPrintContext {
     match pp {
         /// The `Pure` constructor in Free Monad terminology.
         // TODO: we should probably use the inside ctx not the function-arg ctx?
         PrintProgram::Stop(_) => ctx,
         /// The `Free` constructor in Free Monad terminology
-        PrintProgram::Continue(pi) => {
-            match pi {
-                PrintInstruction::Write(s, k) => {
-                    let next_ctx = ctx.write(s);
-                    let next_pl = k();
-                    interpret_print_program(&next_pl, next_ctx)
-                }
-                PrintInstruction::WriteLn(s, k) => {
-                    let next_ctx = ctx.write_line(s);
-                    let next_pl = k();
-                    interpret_print_program(&next_pl, next_ctx)
-                }
-                _ => todo!("eval_print_language not implemented for {:?}", pi),
+        PrintProgram::Continue(pi) => match pi {
+            PrintInstruction::Write(s, k) => {
+                let next_ctx = ctx.write(s);
+                let next_pl = k();
+                interpret_print_program(&next_pl, next_ctx)
             }
-        }
+            PrintInstruction::WriteLn(s, k) => {
+                let next_ctx = ctx.write_line(s);
+                let next_pl = k();
+                interpret_print_program(&next_pl, next_ctx)
+            }
+            _ => todo!("eval_print_language not implemented for {:?}", pi),
+        },
     }
 }
-
 
 /// A program we can use to build up the pretty-printing output.
 ///
@@ -61,7 +61,9 @@ fn interpret_print_program(pp: &PrintProgram<PrettyPrintContext>, ctx: PrettyPri
 /// The "instruction" is the Functor in the corresponding Free Monad "program", [PrintProgram] .
 ///
 /// A Functor is a function that lifts a value into a context, *_e.g.* a scalar into a list.
-/// In Haskell the type signature is: `Functor f => a -> f b`.
+///
+/// In Haskell the type signature is: `Functor f => a -> f b`, and the corresponding
+/// `map` function is `fmap :: (a -> b) -> (f a -> f b)`.
 enum PrintInstruction<TNext> {
     // First arg is the input params, second arg is the response function
     // Note that the continuations (second arg) are degenerate functions of
@@ -99,20 +101,25 @@ impl<TNext> Debug for PrintInstruction<TNext> {
 }
 
 /// Monadic wrapper type for [PrintInstruction] that allows the program to stop or continue.
-/// Notice how it looks a lot like [Option].
+///
 /// The "program" ([PrintProgram]) is the Free Monad for the [PrintInstruction] Functor.
+///
+/// Notice how it looks a lot like the [Result] type, *e.g.*
+/// [Result<PrintInstruction<PrintProgram<T>>, T>] or even the [Option] type, if we ignore that `Stop`
+/// takes a `T`.
 ///
 /// # Free Monad in Haskell
 /// In Haskell the type signatures are:
 /// `Pure :: a -> Free f a`
 /// `Free :: f (Free f a) -> Free f a`
-enum PrintProgram<T> {
+
+// TODO: consider using the Result type to get a lot of functions for free
+enum PrintProgram<'a, T> {
     /// The `Pure` constructor in Free Monad terminology.
     Stop(T),
     /// The `Free` constructor in Free Monad terminology
-    Continue(PrintInstruction<PrintProgram<T>>),
+    Continue(PrintInstruction<PrintProgram<'a, T>>),
 }
-
 
 /// The context (state) for the pretty-printing interpreter.
 struct PrettyPrintContext {
@@ -127,7 +134,6 @@ impl Default for PrettyPrintContext {
         Self::new(4)
     }
 }
-
 
 impl PrettyPrintContext {
     fn new(spaces_per_indent: usize) -> Self {
@@ -172,19 +178,24 @@ impl PrettyPrintContext {
     }
 }
 
-
 /// Translate the Pascal expression into a print-language expression.
-fn print_program_from_pascal<TNext>(pascal: &PascalExpr) -> PrintProgram<TNext> where TNext: Default {
+fn print_program_from_pascal<TNext>(pascal: &PascalExpr) -> PrintProgram<TNext>
+    where
+        TNext: Default,
+{
     match pascal {
         PascalExpr::Program(p) => print_program_from_program(p),
-        PascalExpr::IdentifierList(il) => print_program_from_identifier_list(il),
-        PascalExpr::Declarations(ds) => print_program_from_declarations(ds),
-        PascalExpr::SubprogramDeclarations(sd) => print_program_from_subprogram_declaration(sd),
-        PascalExpr::CompoundStatement(cs) => print_program_from_compound_statement(cs),
+        PascalExpr::IdentifierList(il) => todo!(),
+        PascalExpr::Declarations(ds) => todo!(),
+        PascalExpr::SubprogramDeclarations(sd) => todo!(),
+        PascalExpr::CompoundStatement(cs) => todo!(),
     }
 }
 
-fn print_program_from_program<TNext>(p: &ProgramExpr) -> PrintProgram<TNext> where TNext: Default {
+fn print_program_from_program<'a, TNext>(p: &'a ProgramExpr) -> PrintProgram<'a, TNext>
+    where
+        TNext: Default,
+{
     match p {
         ProgramExpr {
             id,
@@ -193,40 +204,24 @@ fn print_program_from_program<TNext>(p: &ProgramExpr) -> PrintProgram<TNext> whe
             subprogram_declarations,
             compound_statement,
         } => {
-            PrintProgram::Continue(
-                PrintInstruction::Write(
-                    format!("program {}(", id.to_string()),
-                    Box::new(|| PrintProgram::Continue(
-                        PrintInstruction::WriteLn(");".to_string(),
-                                                  // TODO: find a better way to do this than Default
-                                                  Box::new(|| PrintProgram::Stop(Default::default())))
-                    ))))
+            let id_list_string = format_identifier_list(identifier_list);
+            PrintProgram::Continue(PrintInstruction::Write(
+                format!("program {}(", id.to_string()),
+                Box::new(move ||
+                    PrintProgram::Continue(PrintInstruction::Write(id_list_string.clone(),
+                                                                   Box::new(|| PrintProgram::Continue(
+                                                                       PrintInstruction::WriteLn(");".to_string(),
+                                                                                                 Box::new(|| PrintProgram::Stop(Default::default()))))))))))
         }
     }
 }
 
-fn print_program_from_identifier_list<TNext>(il: &IdentifierList) -> PrintProgram<TNext> where TNext: Default {
-    let result = il
-        .0
-        .0
+fn format_identifier_list(il: &IdentifierList) -> String {
+    il.0.0
         .iter()
         .map(|id| id.to_string())
         .collect::<Vec<String>>()
-        .join(", ");
-    // TODO: find something better than Default
-    PrintProgram::Continue(PrintInstruction::Write(result, Box::new(&|| PrintProgram::Stop(Default::default()))))
-}
-
-fn print_program_from_declarations<TNext>(de: &DeclarationsExpr) -> PrintProgram<TNext> {
-    todo!()
-}
-
-fn print_program_from_subprogram_declaration<TNext>(sd: &SubprogramDeclarations) -> PrintProgram<TNext> {
-    todo!()
-}
-
-fn print_program_from_compound_statement<TNext>(cs: &CompoundStatement) -> PrintProgram<TNext> {
-    todo!()
+        .join(", ")
 }
 
 #[cfg(test)]
