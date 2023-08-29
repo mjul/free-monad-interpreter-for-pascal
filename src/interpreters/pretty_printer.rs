@@ -34,7 +34,7 @@ fn interpret_print_program(
         // TODO: we should probably use the inside ctx not the function-arg ctx?
         PrintProgram::Stop(_) => ctx,
         /// The `Free` constructor in Free Monad terminology
-        PrintProgram::Continue(pi) => match pi {
+        PrintProgram::KeepGoing(pi) => match pi {
             PrintInstruction::Write(s, k) => {
                 let next_ctx = ctx.write(s);
                 let next_pl = k();
@@ -118,7 +118,35 @@ enum PrintProgram<'a, T> {
     /// The `Pure` constructor in Free Monad terminology.
     Stop(T),
     /// The `Free` constructor in Free Monad terminology
-    Continue(PrintInstruction<PrintProgram<'a, T>>),
+    KeepGoing(PrintInstruction<PrintProgram<'a, T>>),
+}
+
+impl<'a, T> PrintProgram<'a, T>
+where
+    T: Default,
+{
+    /// Stop constructor
+    fn stop() -> Self {
+        PrintProgram::Stop(Default::default())
+    }
+    /// Keep going and write constructor
+    fn write(s: String, k: Box<dyn Fn() -> Self>) -> Self {
+        PrintProgram::KeepGoing(PrintInstruction::Write(s, k))
+    }
+    /// Keep going and write_ln constructor
+    fn write_ln(s: String, k: Box<dyn Fn() -> Self>) -> Self {
+        PrintProgram::KeepGoing(PrintInstruction::WriteLn(s, k))
+    }
+
+    /// Keep going and increase indentation constructor
+    fn inc_indent(k: Box<dyn Fn() -> Self>) -> Self {
+        PrintProgram::KeepGoing(PrintInstruction::IncIndent((), k))
+    }
+
+    /// Keep going and decrease indentation constructor
+    fn dec_indent(k: Box<dyn Fn() -> Self>) -> Self {
+        PrintProgram::KeepGoing(PrintInstruction::DecIndent((), k))
+    }
 }
 
 /// The context (state) for the pretty-printing interpreter.
@@ -180,8 +208,8 @@ impl PrettyPrintContext {
 
 /// Translate the Pascal expression into a print-language expression.
 fn print_program_from_pascal<TNext>(pascal: &PascalExpr) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match pascal {
         PascalExpr::Program(p) => print_program_from_program(p),
@@ -193,8 +221,8 @@ fn print_program_from_pascal<TNext>(pascal: &PascalExpr) -> PrintProgram<TNext>
 }
 
 fn print_program_from_program<'a, TNext>(p: &'a ProgramExpr) -> PrintProgram<'a, TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match p {
         ProgramExpr {
@@ -205,19 +233,26 @@ fn print_program_from_program<'a, TNext>(p: &'a ProgramExpr) -> PrintProgram<'a,
             compound_statement,
         } => {
             let id_list_string = format_identifier_list(identifier_list);
-            PrintProgram::Continue(PrintInstruction::Write(
+            PrintProgram::write(
                 format!("program {}(", id.to_string()),
-                Box::new(move ||
-                    PrintProgram::Continue(PrintInstruction::Write(id_list_string.clone(),
-                                                                   Box::new(|| PrintProgram::Continue(
-                                                                       PrintInstruction::WriteLn(");".to_string(),
-                                                                                                 Box::new(|| PrintProgram::Stop(Default::default()))))))))))
+                Box::new(move || {
+                    PrintProgram::write(
+                        id_list_string.clone(),
+                        Box::new(|| {
+                            PrintProgram::write_ln(
+                                ");".to_string(),
+                                Box::new(|| PrintProgram::stop()),
+                            )
+                        }),
+                    )
+                }),
+            )
         }
     }
 }
 
 fn format_identifier_list(il: &IdentifierList) -> String {
-    il.0.0
+    il.0 .0
         .iter()
         .map(|id| id.to_string())
         .collect::<Vec<String>>()
