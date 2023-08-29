@@ -21,3 +21,8 @@ instead of consuming a lot of effort to design a bespoke language to use in the 
 ## Free Monads
 - Introduction to Free Monads. Haskell. https://serokell.io/blog/introduction-to-free-monads
 - CP Style Free Monads and Direct Style Free Monads. Idris. https://deque.blog/2017/12/08/continuation-passing-style-free-monads-and-direct-style-free-monads/
+- Scott Wlaschin, Turtle Graphics in F# using Free Monads. https://fsharpforfunandprofit.com/posts/13-ways-of-looking-at-a-turtle-2/#way13 
+- Mark Seemann, Hello, Pure Command-Line Interaction, https://blog.ploeh.dk/2017/07/11/hello-pure-command-line-interaction/
+- Mark Seemann, Combining Free Monads in Haskell, https://blog.ploeh.dk/2017/07/24/combining-free-monads-in-haskell/
+
+

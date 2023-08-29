@@ -3,6 +3,17 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
+
+/// Pascal language expressions, everything between `program` and `end.`
+pub(crate) enum PascalExpr {
+    Program(ProgramExpr),
+    IdentifierList(IdentifierList),
+    Declarations(DeclarationsExpr),
+    SubprogramDeclarations(SubprogramDeclarations),
+    CompoundStatement(CompoundStatement),
+}
+
+
 /// Pascal Program Expression, `program`  ... `.`
 ///
 /// Example Pascal Program:
@@ -13,11 +24,11 @@ use std::fmt::{Debug, Display, Formatter};
 /// end.
 /// ```
 pub(crate) struct ProgramExpr {
-    id: Id,
-    identifier_list: IdentifierList,
-    declarations: DeclarationsExpr,
-    subprogram_declarations: SubprogramDeclarations,
-    compound_statement: CompoundStatement,
+    pub(crate) id: Id,
+    pub(crate) identifier_list: IdentifierList,
+    pub(crate) declarations: DeclarationsExpr,
+    pub(crate) subprogram_declarations: SubprogramDeclarations,
+    pub(crate) compound_statement: CompoundStatement,
 }
 
 impl ProgramExpr {
@@ -39,7 +50,8 @@ impl ProgramExpr {
 }
 
 /// Non-empty list of identifiers
-pub(crate) struct IdentifierList(NonEmptyVec<Id>);
+#[derive(Debug, Clone)]
+pub(crate) struct IdentifierList(pub(crate) NonEmptyVec<Id>);
 
 impl IdentifierList {
     fn new_single(id: Id) -> Self {
@@ -117,7 +129,8 @@ impl ProcedureStatement {
     }
 }
 
-pub(crate) struct NonEmptyVec<T>(Vec<T>);
+#[derive(Debug, Clone)]
+pub(crate) struct NonEmptyVec<T>(pub(crate) Vec<T>);
 
 impl<T> NonEmptyVec<T> {
     /// Create a non-empty vector containing a single item.
@@ -226,6 +239,7 @@ impl Display for TokenError {
 impl Error for TokenError {}
 
 /// Identifier
+#[derive(Debug,Clone)]
 pub(crate) struct Id(String);
 
 impl Id {
@@ -244,6 +258,13 @@ impl Id {
         }
     }
 }
+
+impl Display for Id {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
