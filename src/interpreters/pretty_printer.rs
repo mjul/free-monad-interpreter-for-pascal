@@ -52,18 +52,20 @@ fn interpret_print_program(
 
 /// A program we can use to build up the pretty-printing output.
 ///
+/// The "instruction" is the Functor in the corresponding Free Monad "program", [PrintProgram] .
+///
+/// A Functor is a type that can be mapped over, or in other words, a data structure
+/// with a `map` operation that preserves structure while applying a function to each
+/// element of that structure.
+///
+/// In Haskell the type signature is: `Functor f => a -> f b`, and the corresponding
+/// `map` function is `fmap :: (a -> b) -> (f a -> f b)`.
+///
 /// We are using the terminology from Scott Wlaschin's, F# for Fun and Profit,
 /// https://fsharpforfunandprofit.com/posts/13-ways-of-looking-at-a-turtle-2/#way13
 /// to describe the interpreter.
 ///
 /// Mark Seemann has also covered this in his blog post, https://blog.ploeh.dk/2018/06/18/free-monad-in-c/
-///
-/// The "instruction" is the Functor in the corresponding Free Monad "program", [PrintProgram] .
-///
-/// A Functor is a function that lifts a value into a context, *_e.g.* a scalar into a list.
-///
-/// In Haskell the type signature is: `Functor f => a -> f b`, and the corresponding
-/// `map` function is `fmap :: (a -> b) -> (f a -> f b)`.
 enum PrintInstruction<TNext> {
     // First arg is the input params, second arg is the response function
     // Note that the continuations (second arg) are degenerate functions of

@@ -87,7 +87,7 @@ impl SubprogramDeclarations {
 pub(crate) struct SubprogramDeclaration {}
 
 /// A compound statement consisting of a `begin` and `end` block containing zero or more statements.
-pub(crate) struct CompoundStatement(Vec<Statement>);
+pub(crate) struct CompoundStatement(pub(crate) Vec<Statement>);
 
 impl CompoundStatement {
     pub(crate) fn new(optional_statements: Vec<Statement>) -> Self {
