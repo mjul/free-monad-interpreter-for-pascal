@@ -3,9 +3,7 @@
 
 use std::fmt::{Debug, Formatter, Pointer};
 
-use crate::il::{
-    CompoundStatement, DeclarationsExpr, IdentifierList, PascalExpr, SubprogramDeclarations,
-};
+use crate::il::{IdentifierList, PascalExpr};
 
 use super::super::il::ProgramExpr;
 
@@ -42,6 +40,20 @@ fn interpret_print_program(
             }
             PrintInstruction::WriteLn(s, k) => {
                 let next_ctx = ctx.write_line(s);
+                let next_pl = k();
+                interpret_print_program(&next_pl, next_ctx)
+            }
+            PrintInstruction::IncIndent(_, k) => {
+                dbg!("inc", &ctx);
+                let next_ctx = ctx.increase_indent();
+                let next_pl = k();
+                interpret_print_program(&next_pl, next_ctx)
+            }
+            PrintInstruction::DecIndent(_, k) => {
+                dbg!("dec", &ctx);
+                let next_ctx = ctx
+                    .decrease_indent()
+                    .expect("decreasing indentation level should not go below zero");
                 let next_pl = k();
                 interpret_print_program(&next_pl, next_ctx)
             }
@@ -152,6 +164,7 @@ where
 }
 
 /// The context (state) for the pretty-printing interpreter.
+#[derive(Debug)]
 struct PrettyPrintContext {
     indent_step: usize,
     current_indent_level: usize,
@@ -194,15 +207,16 @@ impl PrettyPrintContext {
         self
     }
 
-    fn increase_indent(&mut self) {
+    fn increase_indent(mut self) -> Self {
         self.current_indent_level += 1;
+        self
     }
-    fn decrease_indent(&mut self) -> Result<(), ()> {
+    fn decrease_indent(mut self) -> Result<Self, ()> {
         match self.current_indent_level {
             0 => Err(()),
             _ => {
                 self.current_indent_level -= 1;
-                Ok(())
+                Ok(self)
             }
         }
     }
@@ -235,6 +249,7 @@ where
             compound_statement,
         } => {
             let id_list_string = format_identifier_list(identifier_list);
+
             PrintProgram::write(
                 format!("program {}(", id.to_string()),
                 Box::new(move || {
@@ -243,7 +258,33 @@ where
                         Box::new(|| {
                             PrintProgram::write_ln(
                                 ");".to_string(),
-                                Box::new(|| PrintProgram::stop()),
+                                Box::new(|| {
+                                    PrintProgram::inc_indent(Box::new(|| {
+                                        PrintProgram::write_ln(
+                                            "begin".to_string(),
+                                            Box::new(|| {
+                                                PrintProgram::write(
+                                                    "{ compound statement }".to_string(),
+                                                    Box::new(|| {
+                                                        PrintProgram::dec_indent(Box::new(|| {
+                                                            PrintProgram::write_ln(
+                                                                "".to_string(),
+                                                                Box::new(|| {
+                                                                    PrintProgram::write_ln(
+                                                                        "end.".to_string(),
+                                                                        Box::new(|| {
+                                                                            PrintProgram::stop()
+                                                                        }),
+                                                                    )
+                                                                }),
+                                                            )
+                                                        }))
+                                                    }),
+                                                )
+                                            }),
+                                        )
+                                    }))
+                                }),
                             )
                         }),
                     )
@@ -270,11 +311,11 @@ mod tests {
     #[test]
     fn pretty_print_hello_world() {
         let p = hello_world();
-        let actual = pretty_print(p, 4);
+        let actual = pretty_print(p, 2);
         let expected = r#"
 program helloWorld(output);
 begin
-writeLn('Hello, World!')
+  writeLn('Hello, World!')
 end."#
             .to_string()
             .trim()
