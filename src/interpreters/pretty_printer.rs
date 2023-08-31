@@ -148,8 +148,8 @@ enum PrintProgram<T> {
 }
 
 impl<T> PrintProgram<T>
-where
-    T: Default,
+    where
+        T: Default,
 {
     /// Stop constructor
     fn stop() -> Self {
@@ -236,8 +236,8 @@ impl PrettyPrintContext {
 
 /// Translate the Pascal expression into a print-language expression.
 fn print_program_from_pascal<TNext>(pascal: &PascalExpr) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     match pascal {
         PascalExpr::Program(p) => print_program_from_program(p),
@@ -249,8 +249,8 @@ where
 }
 
 fn print_program_from_program<TNext>(p: &ProgramExpr) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     match p {
         ProgramExpr {
@@ -262,11 +262,12 @@ where
         } => {
             PrintProgram::write(
                 format!("program {}(", id.to_string()),
-                PrintProgram::write(
-                    // Simplification, we could gene
-                    format_identifier_list(identifier_list),
+                print_program_from_identifier_list(
+                    identifier_list,
                     PrintProgram::write_ln(
                         ");".to_string(),
+                        // TODO: declarations
+                        // TODO: subprogram decls
                         print_program_from_compound_statement(
                             compound_statement,
                             PrintProgram::write(".".to_string(), PrintProgram::stop()),
@@ -282,8 +283,8 @@ fn print_program_from_compound_statement<TNext>(
     cs: &CompoundStatement,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     let CompoundStatement(stmts) = cs;
 
@@ -307,8 +308,8 @@ fn print_program_surround<TNext>(
     body_k: PrintProgram<TNext>,
     tail_k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     PrintProgram::stop()
 }
@@ -317,8 +318,8 @@ fn print_program_from_optional_statements<TNext>(
     stmts: &[Statement],
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     match stmts.len() {
         0 => k,
@@ -340,8 +341,8 @@ fn print_program_from_statement<TNext>(
     stmt: &Statement,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     match stmt {
         Statement::Procedure(ps) => print_program_from_procedure_statement(ps, k),
@@ -353,8 +354,8 @@ fn print_program_from_procedure_statement<TNext>(
     ps: &ProcedureStatement,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     match ps {
         ProcedureStatement(id, None) => PrintProgram::write(id.to_string(), k),
@@ -369,8 +370,8 @@ fn print_program_from_expression_list<TNext>(
     el: &ExpressionList,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     let ExpressionList(NonEmptyVec(exprs)) = el;
     print_program_from_expression_slice(exprs, k)
@@ -380,8 +381,8 @@ fn print_program_from_expression_slice<TNext>(
     el: &[Expression],
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     match el.len() {
         0 => k,
@@ -405,8 +406,8 @@ fn print_program_from_expression<TNext>(
     el: &Expression,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     match el {
         Expression::Simple(se) => print_program_from_simple_expression(se.deref(), k),
@@ -418,8 +419,8 @@ fn print_program_from_simple_expression<TNext>(
     se: &SimpleExpression,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     match se {
         SimpleExpression::Term(term) => print_program_from_term(term, k),
@@ -427,8 +428,8 @@ where
 }
 
 fn print_program_from_term<TNext>(t: &Term, k: PrintProgram<TNext>) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     match t {
         Term::Factor(f) => print_program_from_factor(f, k),
@@ -436,8 +437,8 @@ where
 }
 
 fn print_program_from_factor<TNext>(f: &Factor, k: PrintProgram<TNext>) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     match f {
         Factor::Id(id) => print_program_from_id(id, k),
@@ -450,26 +451,47 @@ where
 }
 
 fn print_program_from_id<TNext>(id: &Id, k: PrintProgram<TNext>) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     PrintProgram::write(id.to_string(), k)
 }
 
 fn print_program_from_string<TNext>(s: &String, k: PrintProgram<TNext>) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     PrintProgram::write(format!("'{}'", s).to_string(), k)
 }
 
-// TODO: replace this with print expressions using the primitives above
-fn format_identifier_list(il: &IdentifierList) -> String {
-    il.0 .0
-        .iter()
-        .map(|id| id.to_string())
-        .collect::<Vec<String>>()
-        .join(", ")
+fn print_program_from_identifier_list<TNext>(
+    il: &IdentifierList,
+    k: PrintProgram<TNext>,
+) -> PrintProgram<TNext>
+    where
+        TNext: Default,
+{
+    let IdentifierList(NonEmptyVec(ids)) = il;
+    print_program_from_id_slice(ids, k)
+}
+
+fn print_program_from_id_slice<TNext>(il: &[Id], k: PrintProgram<TNext>) -> PrintProgram<TNext>
+    where
+        TNext: Default,
+{
+    match il.len() {
+        0 => k,
+        _ => {
+            let (head, tail) = il
+                .split_first()
+                .expect("expression slice should not be empty");
+            let tail_k = match tail.len() {
+                0 => k,
+                _ => PrintProgram::write(", ".to_string(), print_program_from_id_slice(tail, k)),
+            };
+            print_program_from_id(head, tail_k)
+        }
+    }
 }
 
 #[cfg(test)]
