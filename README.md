@@ -52,3 +52,9 @@ It is defined in [`src/interpreters/pretty_printer.rs`](src/intepreters/pretty_p
 - Mark Seemann, Hello, Pure Command-Line
   Interaction, https://blog.ploeh.dk/2017/07/11/hello-pure-command-line-interaction/
 - Mark Seemann, Combining Free Monads in Haskell, https://blog.ploeh.dk/2017/07/24/combining-free-monads-in-haskell/
+
+# License
+MIT License, see [`LICENSE`](LICENSE).
+
+# Author
+Martin Jul, 2023
