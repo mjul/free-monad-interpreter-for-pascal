@@ -1,5 +1,17 @@
 //! Interpreter that emits a pretty-printed version of the program source code.
 //! This is a warm-up exercise for the actual interpreter.
+//!
+//! The main entry point is the [pretty_print] function which formats a Pascal program AST to a string.
+//!
+//! It consists of two parts: a recursive function [print_program_from_pascal] that translates the
+//! AST to a simple printing language, a Free Monad, and
+//! a Free Monad interpreter, [indent_print_program] that interprets the printing language to a string
+//! to accomplish the formatting.
+//!
+//! The translation from AST to printing language is done by a recursive function that is a good
+//! example of the continuation passing style (CPS) that is also used in the Free Monad interpreter.
+//! Interestingly, CPS allows us to build data structures such as lists and trees top down even
+//! though the data structures must be constructed bottom up.
 
 use std::fmt::{Debug, Formatter, Pointer};
 use std::ops::Deref;
