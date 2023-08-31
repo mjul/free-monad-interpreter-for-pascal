@@ -3,7 +3,7 @@
 
 use std::fmt::{Debug, Formatter, Pointer};
 
-use crate::il::{IdentifierList, PascalExpr};
+use crate::il::{CompoundStatement, IdentifierList, PascalExpr};
 
 use super::super::il::ProgramExpr;
 
@@ -88,8 +88,15 @@ enum PrintInstruction<TNext> {
     DecIndent((), PICont<TNext>),
 }
 
-//type PICont<TNext> = Box<dyn Fn() -> TNext>;
+// A continuation is normally a function from the current state to the next state.
+// However, following the style of the Wlaschin article, we are using a degenerate
+// function of no arguments, simplified to a constant. This makes the code simpler
+// with relation to the borrow checker since moves into closures are tricky.
+//
+// It could also be a more elaborate constant function, `type PICont<TNext> = Box<dyn Fn() -> TNext>;`
+// or in the general case, `type PICont<TNext> = Box<dyn Fn(TNext) -> TNext>;`
 type PICont<TNext> = Box<TNext>;
+
 
 /*
 impl<'a, TNext> PrintInstruction<'a, TNext> {
@@ -138,8 +145,8 @@ enum PrintProgram<T> {
 }
 
 impl<T> PrintProgram<T>
-where
-    T: Default,
+    where
+        T: Default,
 {
     /// Stop constructor
     fn stop() -> Self {
@@ -226,8 +233,8 @@ impl PrettyPrintContext {
 
 /// Translate the Pascal expression into a print-language expression.
 fn print_program_from_pascal<TNext>(pascal: &PascalExpr) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     match pascal {
         PascalExpr::Program(p) => print_program_from_program(p),
@@ -239,8 +246,8 @@ where
 }
 
 fn print_program_from_program<TNext>(p: &ProgramExpr) -> PrintProgram<TNext>
-where
-    TNext: Default,
+    where
+        TNext: Default,
 {
     match p {
         ProgramExpr {
@@ -253,22 +260,16 @@ where
             PrintProgram::write(
                 format!("program {}(", id.to_string()),
                 PrintProgram::write(
+                    // Simplification, we could gene
                     format_identifier_list(identifier_list),
                     PrintProgram::write_ln(
                         ");".to_string(),
-                        PrintProgram::inc_indent(PrintProgram::write_ln(
-                            "begin".to_string(),
-                            PrintProgram::write(
-                                "{ compound statement }".to_string(),
-                                PrintProgram::dec_indent(PrintProgram::write_ln(
-                                    "".to_string(),
-                                    PrintProgram::write_ln(
-                                        "end.".to_string(),
-                                        PrintProgram::stop(),
-                                    ),
-                                )),
-                            ),
-                        )),
+                        print_program_from_compound_statement(
+                            compound_statement,
+                            PrintProgram::write_ln(
+                                ".".to_string(),
+                                PrintProgram::stop(),
+                            )),
                     ),
                 ),
             )
@@ -276,8 +277,32 @@ where
     }
 }
 
+
+fn print_program_from_compound_statement<TNext>(cs: &CompoundStatement, k: PrintProgram<TNext>) -> PrintProgram<TNext>
+    where
+        TNext: Default,
+{
+    PrintProgram::write(
+        "begin".to_string(),
+        PrintProgram::inc_indent(
+            PrintProgram::write_ln(
+                "".to_string(),
+                PrintProgram::write(
+                    "{ compound statement }".to_string(),
+                    PrintProgram::dec_indent(
+                        PrintProgram::write_ln(
+                            "".to_string(),
+                            PrintProgram::write(
+                                "end".to_string(),
+                                k,
+                            ),
+                        )),
+                ),
+            )))
+}
+
 fn format_identifier_list(il: &IdentifierList) -> String {
-    il.0 .0
+    il.0.0
         .iter()
         .map(|id| id.to_string())
         .collect::<Vec<String>>()
