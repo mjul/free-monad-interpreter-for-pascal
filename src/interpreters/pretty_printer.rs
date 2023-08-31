@@ -35,24 +35,24 @@ fn interpret_print_program(
         PrintProgram::KeepGoing(pi) => match pi {
             PrintInstruction::Write(s, k) => {
                 let next_ctx = ctx.write(s);
-                let next_pl = k();
+                let next_pl = k;
                 interpret_print_program(&next_pl, next_ctx)
             }
             PrintInstruction::WriteLn(s, k) => {
                 let next_ctx = ctx.write_line(s);
-                let next_pl = k();
+                let next_pl = k;
                 interpret_print_program(&next_pl, next_ctx)
             }
             PrintInstruction::IncIndent(_, k) => {
                 let next_ctx = ctx.increase_indent();
-                let next_pl = k();
+                let next_pl = k;
                 interpret_print_program(&next_pl, next_ctx)
             }
             PrintInstruction::DecIndent(_, k) => {
                 let next_ctx = ctx
                     .decrease_indent()
                     .expect("decreasing indentation level should not go below zero");
-                let next_pl = k();
+                let next_pl = k;
                 interpret_print_program(&next_pl, next_ctx)
             }
             _ => todo!("eval_print_language not implemented for {:?}", pi),
@@ -80,12 +80,16 @@ enum PrintInstruction<TNext> {
     // First arg is the input params, second arg is the response function
     // Note that the continuations (second arg) are degenerate functions of
     // no arguments since the operations are not returning any values.
-    // We could even write them as `Box<TNext>`.
-    Write(String, Box<dyn Fn() -> TNext>),
-    WriteLn(String, Box<dyn Fn() -> TNext>),
-    IncIndent((), Box<dyn Fn() -> TNext>),
-    DecIndent((), Box<dyn Fn() -> TNext>),
+    // We can write them as `Box<dyn Fn() -> TNext>` or more simply
+    // `Box<TNext>`.
+    Write(String, PICont<TNext>),
+    WriteLn(String, PICont<TNext>),
+    IncIndent((), PICont<TNext>),
+    DecIndent((), PICont<TNext>),
 }
+
+//type PICont<TNext> = Box<dyn Fn() -> TNext>;
+type PICont<TNext> = Box<TNext>;
 
 /*
 impl<'a, TNext> PrintInstruction<'a, TNext> {
@@ -126,14 +130,14 @@ impl<TNext> Debug for PrintInstruction<TNext> {
 /// `Free :: f (Free f a) -> Free f a`
 
 // TODO: consider using the Result type to get a lot of functions for free
-enum PrintProgram<'a, T> {
+enum PrintProgram<T> {
     /// The `Pure` constructor in Free Monad terminology.
     Stop(T),
     /// The `Free` constructor in Free Monad terminology
-    KeepGoing(PrintInstruction<PrintProgram<'a, T>>),
+    KeepGoing(PrintInstruction<PrintProgram<T>>),
 }
 
-impl<'a, T> PrintProgram<'a, T>
+impl<T> PrintProgram<T>
 where
     T: Default,
 {
@@ -142,22 +146,22 @@ where
         PrintProgram::Stop(Default::default())
     }
     /// Keep going and write constructor
-    fn write(s: String, k: Box<dyn Fn() -> Self>) -> Self {
-        PrintProgram::KeepGoing(PrintInstruction::Write(s, k))
+    fn write(s: String, k: Self) -> Self {
+        PrintProgram::KeepGoing(PrintInstruction::Write(s, Box::new(k)))
     }
     /// Keep going and write_ln constructor
-    fn write_ln(s: String, k: Box<dyn Fn() -> Self>) -> Self {
-        PrintProgram::KeepGoing(PrintInstruction::WriteLn(s, k))
+    fn write_ln(s: String, k: Self) -> Self {
+        PrintProgram::KeepGoing(PrintInstruction::WriteLn(s, Box::new(k)))
     }
 
     /// Keep going and increase indentation constructor
-    fn inc_indent(k: Box<dyn Fn() -> Self>) -> Self {
-        PrintProgram::KeepGoing(PrintInstruction::IncIndent((), k))
+    fn inc_indent(k: Self) -> Self {
+        PrintProgram::KeepGoing(PrintInstruction::IncIndent((), Box::new(k)))
     }
 
     /// Keep going and decrease indentation constructor
-    fn dec_indent(k: Box<dyn Fn() -> Self>) -> Self {
-        PrintProgram::KeepGoing(PrintInstruction::DecIndent((), k))
+    fn dec_indent(k: Self) -> Self {
+        PrintProgram::KeepGoing(PrintInstruction::DecIndent((), Box::new(k)))
     }
 }
 
@@ -234,7 +238,7 @@ where
     }
 }
 
-fn print_program_from_program<'a, TNext>(p: &'a ProgramExpr) -> PrintProgram<'a, TNext>
+fn print_program_from_program<TNext>(p: &ProgramExpr) -> PrintProgram<TNext>
 where
     TNext: Default,
 {
@@ -246,47 +250,27 @@ where
             subprogram_declarations,
             compound_statement,
         } => {
-            let id_list_string = format_identifier_list(identifier_list);
-
             PrintProgram::write(
                 format!("program {}(", id.to_string()),
-                Box::new(move || {
-                    PrintProgram::write(
-                        id_list_string.clone(),
-                        Box::new(|| {
-                            PrintProgram::write_ln(
-                                ");".to_string(),
-                                Box::new(|| {
-                                    PrintProgram::inc_indent(Box::new(|| {
-                                        PrintProgram::write_ln(
-                                            "begin".to_string(),
-                                            Box::new(|| {
-                                                PrintProgram::write(
-                                                    "{ compound statement }".to_string(),
-                                                    Box::new(|| {
-                                                        PrintProgram::dec_indent(Box::new(|| {
-                                                            PrintProgram::write_ln(
-                                                                "".to_string(),
-                                                                Box::new(|| {
-                                                                    PrintProgram::write_ln(
-                                                                        "end.".to_string(),
-                                                                        Box::new(|| {
-                                                                            PrintProgram::stop()
-                                                                        }),
-                                                                    )
-                                                                }),
-                                                            )
-                                                        }))
-                                                    }),
-                                                )
-                                            }),
-                                        )
-                                    }))
-                                }),
-                            )
-                        }),
-                    )
-                }),
+                PrintProgram::write(
+                    format_identifier_list(identifier_list),
+                    PrintProgram::write_ln(
+                        ");".to_string(),
+                        PrintProgram::inc_indent(PrintProgram::write_ln(
+                            "begin".to_string(),
+                            PrintProgram::write(
+                                "{ compound statement }".to_string(),
+                                PrintProgram::dec_indent(PrintProgram::write_ln(
+                                    "".to_string(),
+                                    PrintProgram::write_ln(
+                                        "end.".to_string(),
+                                        PrintProgram::stop(),
+                                    ),
+                                )),
+                            ),
+                        )),
+                    ),
+                ),
             )
         }
     }
