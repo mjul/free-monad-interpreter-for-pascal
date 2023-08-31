@@ -118,7 +118,7 @@ impl Statement {
     }
 }
 
-pub(crate) struct ProcedureStatement(Id, Option<ExpressionList>);
+pub(crate) struct ProcedureStatement(pub(crate) Id, pub(crate) Option<ExpressionList>);
 
 impl ProcedureStatement {
     pub(crate) fn new(id: Id) -> Self {
@@ -148,7 +148,7 @@ impl<T> NonEmptyVec<T> {
 }
 
 /// A non-empty list of expressions
-pub(crate) struct ExpressionList(NonEmptyVec<Expression>);
+pub(crate) struct ExpressionList(pub(crate) NonEmptyVec<Expression>);
 
 impl ExpressionList {
     /// Create a new [ExpressionList] from a non-empty vector of [Expression]s
