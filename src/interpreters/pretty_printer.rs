@@ -44,13 +44,11 @@ fn interpret_print_program(
                 interpret_print_program(&next_pl, next_ctx)
             }
             PrintInstruction::IncIndent(_, k) => {
-                dbg!("inc", &ctx);
                 let next_ctx = ctx.increase_indent();
                 let next_pl = k();
                 interpret_print_program(&next_pl, next_ctx)
             }
             PrintInstruction::DecIndent(_, k) => {
-                dbg!("dec", &ctx);
                 let next_ctx = ctx
                     .decrease_indent()
                     .expect("decreasing indentation level should not go below zero");
