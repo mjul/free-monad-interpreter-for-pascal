@@ -98,15 +98,16 @@ mod tests {
     test_can_all!(pascal_parser_can_parse_variable_array_without_err, variable, "x[1]");
 
     test_can_all!(pascal_parser_can_parse_expression_list_single_without_err, expression_list, "1");
-    test_can_all!(pascal_parser_can_parse_expression_list_multiple_2_without_err, expression_list, "1+2");
-    test_can_all!(pascal_parser_can_parse_expression_list_multiple_3_without_err, expression_list, "1+2-3");
+    test_can_all!(pascal_parser_can_parse_expression_list_multiple_2_without_err, expression_list, "1,2");
+    test_can_all!(pascal_parser_can_parse_expression_list_multiple_3_without_err, expression_list, "1,2,1+2");
 
     test_can_all!(pascal_parser_can_parse_expression_simple_without_err, expression, "(+1)");
     test_can_all!(pascal_parser_can_parse_expression_relop_without_err, expression, "x < 2");
 
     test_can_all!(pascal_parser_can_parse_simple_expression_term_without_err, simple_expression, "x");
     test_can_all!(pascal_parser_can_parse_simple_expression_sign_term_without_err, simple_expression, "-x");
-    test_can_all!(pascal_parser_can_parse_simple_expression_add_op_without_err, simple_expression, "x + y");
+    test_can_all!(pascal_parser_can_parse_simple_expression_add_op_1_without_err, simple_expression, "x + y");
+    test_can_all!(pascal_parser_can_parse_simple_expression_add_op_2_without_err, simple_expression, "-x + y - z");
 
     test_can_all!(pascal_parser_can_parse_term_factor_without_err, term, "x");
     test_can_all!(pascal_parser_can_parse_term_mulop_single_without_err, term, "2*x");

@@ -159,20 +159,16 @@ procedure_statement = {
 }
 
 expression_list = {
-    expression
-    | (expression ~ COMMA ~ expression_list)
+    expression ~ (COMMA ~ expression)*
 }
 
 expression = {
-    simple_expression
-    | (simple_expression ~ RELOP ~ simple_expression)
+    simple_expression ~ (RELOP ~ simple_expression)?
 }
 
 // Slightly rewritten to avoid left-recursion
 simple_expression = {
-    term
-    | (sign ~ term)
-    | ((term | (sign ~term)) ~ ADDOP ~ simple_expression)
+    (term | (sign ~ term)) ~ (ADDOP ~ simple_expression)?
 }
 
 term = {
