@@ -20,9 +20,14 @@ mod tests {
         ($name:ident, $rule:ident, $input:expr) => {
             #[test]
             fn $name() {
-                let pairs = PascalParser::parse(Rule::$rule, $input);
-                dbg!(&pairs);
-                assert!(pairs.is_ok());
+                let result_pairs = PascalParser::parse(Rule::$rule, $input);
+                dbg!(&result_pairs);
+                assert!(result_pairs.is_ok());
+                let pairs = result_pairs.unwrap();
+                assert_eq!(1, pairs.len());
+                let p = pairs.into_iter().next().unwrap();
+                assert_eq!(Rule::$rule, p.as_rule());
+                assert_eq!($input, p.as_span().as_str(), "Expected to consume all input");
             }
         };
     }
@@ -48,6 +53,18 @@ mod tests {
     test_can!(pascal_parser_can_parse_declarations_single_decl_single_var_without_err, declarations, "var a : integer;");
     test_can!(pascal_parser_can_parse_declarations_single_dec_multiple_vars_without_err, declarations, "var i, j : integer;");
     test_can!(pascal_parser_can_parse_declarations_multiple_decls_without_err, declarations, "var a : integer; var b: integer;");
+
+    test_can!(pascal_parser_can_parse_subprogram_declarations_empty_without_err, subprogram_declarations, "");
+    test_can!(pascal_parser_can_parse_subprogram_declarations_single_function_without_err, subprogram_declarations, "function foo: integer; begin end;");
+
+    test_can!(pascal_parser_can_parse_subprogram_head_function_no_args_without_err, subprogram_head, "function foo: integer;");
+    test_can!(pascal_parser_can_parse_subprogram_head_function_with_args_without_err, subprogram_head, "function foo(x:integer): integer;");
+    test_can!(pascal_parser_can_parse_subprogram_head_procedure_no_args_without_err, subprogram_head, "procedure foo;");
+    test_can!(pascal_parser_can_parse_subprogram_head_procedure_with_args_without_err, subprogram_head, "procedure foo(x:integer);");
+
+    test_can!(pascal_parser_can_parse_arguments_empty_without_err, arguments, "");
+    test_can!(pascal_parser_can_parse_arguments_single_without_err, arguments, "(x:integer)");
+    test_can!(pascal_parser_can_parse_arguments_multiple_without_err, arguments, "(x:integer, y : integer)");
 
     test_can!(pascal_parser_can_parse_begin_without_err, BEGIN, "begin");
     test_can!(pascal_parser_can_parse_end_without_err, END, "end");
