@@ -52,6 +52,10 @@ mod tests {
     test_can!(pascal_parser_can_parse_begin_without_err, BEGIN, "begin");
     test_can!(pascal_parser_can_parse_end_without_err, END, "end");
 
+    test_can!(pascal_parser_can_parse_optional_statements_empty_without_err, optional_statements, "");
+    test_can!(pascal_parser_can_parse_optional_statements_single_statement_without_err, optional_statements, "x := 1");
+    test_can!(pascal_parser_can_parse_optional_statements_multiple_statements_without_err, optional_statements, "x:=1; y:=2");
+
     test_can!(pascal_parser_can_parse_compound_statement_empty_without_err, compound_statement, "begin end");
     test_can!(pascal_parser_can_parse_compound_statement_single_assignment_without_err, compound_statement, "begin x:=1 end");
     test_can!(pascal_parser_can_parse_compound_statement_single_writeln_without_err, compound_statement, "begin writeLn('Hello, World!') end");
