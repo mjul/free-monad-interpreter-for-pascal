@@ -1,0 +1,198 @@
+// Grammar for a small subset of the Pascal language
+//
+// Adapted from https://www2.seas.gwu.edu/~hchoi/teaching/cs160d/pascal.pdf
+// and the ANTLR Pascal grammar, https://github.com/antlr/grammars-v4/blob/master/pascal/pascal.g4
+
+// The grammar is written in Pest, a parser generator for Rust
+
+// Terminal symbols are normally uppercase
+// prefixing strings with ^ makes them case-insensitive
+// See https://docs.rs/pest/latest/pest/#expressions
+
+// By defining WHITESPACE, a special rule, we can use it in the grammar to ignore whitespace
+// It is a special rule that runs between productions.
+// The _ prefix means that the rule does not produce any tokens
+// See https://docs.rs/pest/latest/pest/index.html#whitespace-and-comment
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+
+DOT = {"."}
+COLON = {":"}
+SEMICOLON = {";"}
+COMMA = {","}
+UNDERSCORE = {"_"}
+// Pascal identifiers are case-insensitive, ASCII_ALPHA is [a-zA-Z]
+// Use the @ modifier to mark the rule "atomic", meaning it will not accept whitespace inside the token.
+IDENT = @{ASCII_ALPHA ~ (ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE) *}
+LPAREN = {"("}
+RPAREN = {")"}
+LBRACK = {"["}
+RBRACK = {"]"}
+ASSIGNOP = {":="}
+PLUS = {"+"}
+MINUS = {"-"}
+DOTDOT = {".."}
+APOSTROPHE = {"'"}
+
+// String literals are enclosed in single quotes, and can contain escaped single quotes
+STRING_LITERAL = @{
+    (APOSTROPHE
+    ~ ((APOSTROPHE ~ APOSTROPHE)
+        | !APOSTROPHE ~ ANY)*
+    ~ APOSTROPHE)
+}
+
+// Terminals for keywords, note the use of ^ since they are case-insensitive
+// Note that we use the ~ and ! combinators to match the keywords exactly, since
+// if an IDENT starts with a keyword it is still an IDENT, e.g. "program1" is not a keyword
+// Note that we use the @ modifier to mark the rule "atomic", meaning it will not
+// accept whitespace between the tokens.
+PROGRAM = @{^"program" ~ !IDENT}
+IF = @{^"if" ~ !IDENT}
+THEN = @{^"then" ~ !IDENT}
+ELSE = @{^"else" ~ !IDENT}
+WHILE = @{^"while" ~!IDENT}
+DO = @{^"do" ~ !IDENT}
+NOT = @{^"not" ~ !IDENT}
+BEGIN = @{^"begin" ~ !IDENT}
+END = @{^"end" ~ !IDENT}
+VAR = @{^"var" ~ !IDENT}
+PROCEDURE = @{^"procedure" ~ !IDENT}
+FUNCTION = @{^"function" ~ !IDENT}
+
+INTEGER = {^"integer" ~ !IDENT}
+REAL = {^"real" ~ !IDENT}
+ARRAY = {^"array" ~ !IDENT}
+OF = {^"of" ~ !IDENT}
+
+ADDOP = {"+" | "-" } // TODO: "OR" is not yet supported
+RELOP = {"=" | "<" | ">" | "<=" | ">=" | "<>"}
+MULOP = {"*" | "/" } // TODO: "DIV" and "MOD" are not yet supported
+// Match digits atomically, no whitespace allowed
+NUM_INT = @{ ASCII_DIGIT+ }
+
+// Non-terminal symbols are normally lowercase
+// ~ is a sequence combinator ("a" ~ "b" matches a followed by b, e.g. "ab")
+
+program = { SOI
+            ~ (PROGRAM ~ IDENT ~ LPAREN ~ identifier_list ~ RPAREN ~ SEMICOLON)
+            ~ declarations
+            ~ subprogram_declarations
+            ~ compound_statement
+            ~ DOT
+            ~ EOI }
+
+// The following rule is left-recursive, which is not supported by Pest
+// identifier_list = { id | (identifier_list ~ COMMA ~ id)}
+// So, we can rewrite it as follows:
+identifier_list = { IDENT ~ (COMMA ~ IDENT)? }
+
+// We use the ? combinator to make a rule optional instead of an or-epsilon production
+// We use the * combinator to make a rule repeatable zero or more times
+// (the Kleene star, see https://en.wikipedia.org/wiki/Kleene_star).
+declarations = {
+    (VAR ~ identifier_list ~ COLON ~ type ~ SEMICOLON)*
+}
+
+type = {
+    standard_type
+    | (ARRAY ~ LBRACK ~ NUM_INT ~ DOT ~ DOT ~ NUM_INT ~ RBRACK ~ OF ~ standard_type) }
+
+standard_type = {
+    INTEGER
+    | REAL
+    // TODO: | BOOLEAN
+    // TODO: | CHAR
+}
+
+subprogram_declarations = {
+    subprogram_declaration ~ (SEMICOLON ~ subprogram_declarations)?
+}
+
+subprogram_declaration = {
+    subprogram_head ~ declarations ~ compound_statement
+}
+
+subprogram_head = {
+    FUNCTION ~ IDENT ~ arguments ~ COLON ~ standard_type ~ SEMICOLON
+    | PROCEDURE ~ IDENT ~ arguments ~ SEMICOLON
+}
+
+arguments = {
+    (LPAREN ~ parameter_list ~ RPAREN)?
+}
+
+// Again rewritten to avoid left-recursion
+parameter_list = {
+    identifier_list ~ COLON ~ type ~ (SEMICOLON ~ identifier_list ~ COLON ~ type)*
+}
+
+compound_statement = {BEGIN ~ optional_statements ~ END}
+// We don't have a en epsilon production in Pest,
+// so instead of {statement_list | epsilon } we use the optional combinator
+optional_statements = { statement_list? }
+
+// Again rewritten to avoid left-recursion
+statement_list = {
+    statement ~ (SEMICOLON ~ statement)*
+}
+
+// So far, we have tried to keep the rules close the the grammars mentioned above,
+// but do note that we could use more of the PEG features of Pest to simplify the grammar.
+
+statement = {
+    (variable ~ ASSIGNOP ~ expression)
+    | procedure_statement
+    | compound_statement
+    | (IF ~ expression ~ THEN ~ statement ~ ELSE ~ statement)
+    | (WHILE ~ expression ~ DO ~ statement)
+}
+
+variable = {
+    IDENT
+    | (IDENT ~ LBRACK ~ expression ~ RBRACK)
+}
+
+procedure_statement = {
+    IDENT
+    | (IDENT ~ LPAREN ~ expression_list ~ RPAREN)
+}
+
+expression_list = {
+    expression
+    | (expression ~ COMMA ~ expression_list)
+}
+
+expression = {
+    simple_expression
+    | (simple_expression ~ RELOP ~ simple_expression)
+}
+
+// Slightly rewritten to avoid left-recursion
+simple_expression = {
+    term
+    | (sign ~ term)
+    | ((term | (sign ~term)) ~ ADDOP ~ simple_expression)
+}
+
+term = {
+    signed_factor ~ (MULOP ~ term)?
+}
+
+signed_factor = {
+    factor
+    | (sign ~ factor)
+}
+
+factor = {
+    IDENT
+    | (IDENT ~ LPAREN ~ expression_list ~ RPAREN)
+    | num
+    | (LPAREN ~ expression ~ RPAREN)
+    | (NOT ~ factor)
+}
+
+sign = { PLUS | MINUS }
+
+num = @{ NUM_INT } // TODO: add the remaining numerical types
+
+

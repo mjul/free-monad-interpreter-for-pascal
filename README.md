@@ -53,6 +53,9 @@ It is defined in [`src/interpreters/pretty_printer.rs`](src/intepreters/pretty_p
   Interaction, https://blog.ploeh.dk/2017/07/11/hello-pure-command-line-interaction/
 - Mark Seemann, Combining Free Monads in Haskell, https://blog.ploeh.dk/2017/07/24/combining-free-monads-in-haskell/
 
+## Notable Libraries
+- The `pest` parser generator, used in the compiler front-end, see https://pest.rs/
+
 # License
 MIT License, see [`LICENSE`](LICENSE).
 
