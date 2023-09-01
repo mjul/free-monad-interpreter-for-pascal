@@ -83,8 +83,8 @@ program = { SOI
 
 // The following rule is left-recursive, which is not supported by Pest
 // identifier_list = { id | (identifier_list ~ COMMA ~ id)}
-// So, we can rewrite it as follows:
-identifier_list = { IDENT ~ (COMMA ~ IDENT)? }
+// So, we can rewrite it as follows, using the Kleene star combinator
+identifier_list = { IDENT ~ (COMMA ~ IDENT)* }
 
 // We use the ? combinator to make a rule optional instead of an or-epsilon production
 // We use the * combinator to make a rule repeatable zero or more times
