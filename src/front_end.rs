@@ -117,7 +117,11 @@ mod tests {
     test_can_all!(pascal_parser_can_parse_factor_id_list_without_err, factor, "foo(x,y,z)");
     test_can_all!(pascal_parser_can_parse_factor_num_without_err, factor, "42");
     test_can_all!(pascal_parser_can_parse_factor_parens_without_err, factor, "(1)");
-    test_can_all!(pascal_parser_can_parse_factor_not_without_err, factor, "not x");
+    test_can_all!(pascal_parser_can_parse_factor_not_id_without_err, factor, "not x");
+    test_can_all!(pascal_parser_can_parse_factor_not_id_list_without_err, factor, "not foo(1,2)");
+    test_can_all!(pascal_parser_can_parse_factor_not_num_without_err, factor, "not 1");
+    test_can_all!(pascal_parser_can_parse_factor_not_parens_without_err, factor, "not (1+2)");
+    test_can_all!(pascal_parser_can_parse_factor_not_not_parens_without_err, factor, "not not (1+2)");
 
     test_can_all!(pascal_parser_can_parse_program_empty_program_without_err, program, "program helloWorld(output);.");
     test_can_all!(pascal_parser_can_parse_program_hello_world_without_err, program, r#"program helloWorld(output);begin writeLn('Hello, World!') end."#);
