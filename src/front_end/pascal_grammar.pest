@@ -66,7 +66,7 @@ OF = {^"of" ~ !IDENT}
 
 ADDOP = {"+" | "-" } // TODO: "OR" is not yet supported
 RELOP = {"=" | "<" | ">" | "<=" | ">=" | "<>"}
-MULOP = {"*" | "/" } // TODO: "DIV" and "MOD" are not yet supported
+MULOP = {"*" | "/" } // TODO: "DIV", "MOD" and "AND" are not yet supported
 // Match digits atomically, no whitespace allowed
 NUM_INT = @{ ASCII_DIGIT+ }
 
@@ -148,14 +148,14 @@ statement = {
     | (WHILE ~ expression ~ DO ~ statement)
 }
 
+// Identifier with optional array indexБ e.g. a or a[1]
+// Simplified, Pascal allows more complex array indices
 variable = {
-    IDENT
-    | (IDENT ~ LBRACK ~ expression ~ RBRACK)
+    IDENT ~ (LBRACK ~ expression ~ RBRACK)?
 }
 
 procedure_statement = {
-    IDENT
-    | (IDENT ~ LPAREN ~ expression_list ~ RPAREN)
+    IDENT ~ (LPAREN ~ expression_list ~ RPAREN)?
 }
 
 expression_list = {
@@ -176,12 +176,7 @@ simple_expression = {
 }
 
 term = {
-    signed_factor ~ (MULOP ~ term)?
-}
-
-signed_factor = {
-    factor
-    | (sign ~ factor)
+    factor ~ (MULOP ~ factor)*
 }
 
 factor = {
