@@ -46,23 +46,23 @@ STRING_LITERAL = @{
 // if an IDENT starts with a keyword it is still an IDENT, e.g. "program1" is not a keyword
 // Note that we use the @ modifier to mark the rule "atomic", meaning it will not
 // accept whitespace between the tokens.
-PROGRAM = @{^"program" ~ !IDENT}
-IF = @{^"if" ~ !IDENT}
-THEN = @{^"then" ~ !IDENT}
-ELSE = @{^"else" ~ !IDENT}
-WHILE = @{^"while" ~!IDENT}
-DO = @{^"do" ~ !IDENT}
-NOT = @{^"not" ~ !IDENT}
-BEGIN = @{^"begin" ~ !IDENT}
-END = @{^"end" ~ !IDENT}
-VAR = @{^"var" ~ !IDENT}
-PROCEDURE = @{^"procedure" ~ !IDENT}
-FUNCTION = @{^"function" ~ !IDENT}
+PROGRAM = @{^"program" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
+IF = @{^"if" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
+THEN = @{^"then" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
+ELSE = @{^"else" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
+WHILE = @{^"while" ~!(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
+DO = @{^"do" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
+NOT = @{^"not" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
+BEGIN = @{^"begin" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
+END = @{^"end" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
+VAR = @{^"var" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
+PROCEDURE = @{^"procedure" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
+FUNCTION = @{^"function" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
 
-INTEGER = {^"integer" ~ !IDENT}
-REAL = {^"real" ~ !IDENT}
-ARRAY = {^"array" ~ !IDENT}
-OF = {^"of" ~ !IDENT}
+INTEGER = {^"integer" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
+REAL = {^"real" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
+ARRAY = {^"array" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
+OF = {^"of" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
 
 ADDOP = {"+" | "-" } // TODO: "OR" is not yet supported
 RELOP = {"=" | "<" | ">" | "<=" | ">=" | "<>"}
