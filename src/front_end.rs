@@ -70,7 +70,11 @@ mod tests {
 
     test_can_all!(pascal_parser_can_parse_arguments_empty_without_err, arguments, "");
     test_can_all!(pascal_parser_can_parse_arguments_single_without_err, arguments, "(x:integer)");
-    test_can_all!(pascal_parser_can_parse_arguments_multiple_without_err, arguments, "(x:integer, y : integer)");
+    test_can_all!(pascal_parser_can_parse_arguments_multiple_without_err, arguments, "(x:integer; y : integer)");
+
+    test_can_all!(pascal_parser_can_parse_parameter_list_single_without_err, parameter_list, "x:integer");
+    test_can_all!(pascal_parser_can_parse_parameter_list_multiple_2_without_err, parameter_list, "x:integer; y : integer");
+    test_can_all!(pascal_parser_can_parse_parameter_list_multiple_3_without_err, parameter_list, "x:integer; y : integer; z : integer");
 
     test_can_all!(pascal_parser_can_parse_begin_without_err, BEGIN, "begin");
     test_can_all!(pascal_parser_can_parse_end_without_err, END, "end");
