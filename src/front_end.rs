@@ -2,7 +2,7 @@
 //! This module parses Pascal files to the intermediate representation.
 //!
 //! It uses the Pest parser generator to parse the Pascal files,
-//! see https://pest.rs/
+//! see <https://pest.rs/>
 
 use pest::Parser;
 use pest_derive::Parser;

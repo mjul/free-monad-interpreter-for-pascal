@@ -88,10 +88,10 @@ fn interpret_print_program(
 /// `map` function is `fmap :: (a -> b) -> (f a -> f b)`.
 ///
 /// We are using the terminology from Scott Wlaschin's, F# for Fun and Profit,
-/// https://fsharpforfunandprofit.com/posts/13-ways-of-looking-at-a-turtle-2/#way13
+/// <https://fsharpforfunandprofit.com/posts/13-ways-of-looking-at-a-turtle-2/#way13>
 /// to describe the interpreter.
 ///
-/// Mark Seemann has also covered this in his blog post, https://blog.ploeh.dk/2018/06/18/free-monad-in-c/
+/// Mark Seemann has also covered this in his blog post, <https://blog.ploeh.dk/2018/06/18/free-monad-in-c/>
 enum PrintInstruction<TNext> {
     // First arg is the input params, second arg is the response function
     // Note that the continuations (second arg) are degenerate functions of
