@@ -37,6 +37,7 @@ It is defined in [`src/interpreters/pretty_printer.rs`](src/intepreters/pretty_p
   1975. https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/68667/eth-3055-01.pdf
 - The ANTLR parser generator has a grammar for Pascal: https://github.com/antlr/grammars-v4/tree/master/pascal
 - A grammar for a small subset of [PASCAL](https://www2.seas.gwu.edu/~hchoi/teaching/cs160d/pascal.pdf)
+- Pascal ISO 7185:1990, the unextended Pascal standard, https://github.com/antlr/grammars-v4/blob/master/pascal/iso7185.pdf 
 
 ## Free Monads
 
