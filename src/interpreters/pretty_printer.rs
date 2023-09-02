@@ -5,8 +5,8 @@
 //!
 //! It consists of two parts: a recursive function [print_program_from_pascal] that translates the
 //! AST to a simple printing language, a Free Monad, and
-//! a Free Monad interpreter, [indent_print_program] that interprets the printing language to a string
-//! to accomplish the formatting.
+//! a Free Monad interpreter, [interpret_print_program] that interprets the printing language
+//! to produce a string to accomplish the formatting.
 //!
 //! The translation from AST to printing language is done by a recursive function that is a good
 //! example of the continuation passing style (CPS) that is also used in the Free Monad interpreter.
