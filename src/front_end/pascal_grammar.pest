@@ -20,9 +20,74 @@ COLON = {":"}
 SEMICOLON = {";"}
 COMMA = {","}
 UNDERSCORE = {"_"}
+
+// Terminals for keywords, note the use of ^ since they are case-insensitive
+// Note that we use the ~ and ! combinators to match the keywords exactly, since
+// if an IDENT starts with a keyword it is still an IDENT, e.g. "program1" is not a keyword
+// Note that we use the @ modifier to mark the rule "atomic", meaning it will not
+// accept whitespace between the tokens.
+
 // Pascal identifiers are case-insensitive, ASCII_ALPHA is [a-zA-Z]
 // Use the @ modifier to mark the rule "atomic", meaning it will not accept whitespace inside the token.
-IDENT = @{ASCII_ALPHA ~ (ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE) *}
+// First we define the set of characters that can be part of an identifier after the first character
+// We will define the IDENT production later, when we have define the keywords (word-symbols) to ensure that
+// they are not matched as IDENT
+IDENT_REST = @{ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE}
+
+AND = @{^"and" ~ !IDENT_REST}
+ARRAY = {^"array" ~ !IDENT_REST}
+BEGIN = @{^"begin" ~ !IDENT_REST}
+CASE = @{^"case" ~ !IDENT_REST}
+CONST = @{^"const" ~ !IDENT_REST}
+DIV = @{^"div" ~ !IDENT_REST}
+DO = @{^"do" ~ !IDENT_REST}
+DOWNTO = @{^"downto" ~ !IDENT_REST}
+ELSE = @{^"else" ~ !IDENT_REST}
+END = @{^"end" ~ !IDENT_REST}
+FILE = @{^"file" ~ !IDENT_REST}
+FOR = @{^"for" ~ !IDENT_REST}
+FUNCTION = @{^"function" ~ !IDENT_REST}
+GOTO = @{^"goto" ~ !IDENT_REST}
+IF = @{^"if" ~ !IDENT_REST}
+IN = @{^"in" ~ !IDENT_REST}
+INTEGER = {^"integer" ~ !IDENT_REST}
+LABEL = @{^"label" ~ !IDENT_REST}
+MOD = @{^"mod" ~ !IDENT_REST}
+NIL = @{^"nil" ~ !IDENT_REST}
+NOT = @{^"not" ~ !IDENT_REST}
+OF = {^"of" ~ !IDENT_REST}
+OR = @{^"or" ~ !IDENT_REST}
+PACKED = @{^"packed" ~ !IDENT_REST}
+PROCEDURE = @{^"procedure" ~ !IDENT_REST}
+PROGRAM = @{^"program" ~ !IDENT_REST}
+REAL = {^"real" ~ !IDENT_REST}
+RECORD = @{^"record" ~ !IDENT_REST}
+REPEAT = @{^"repeat" ~ !IDENT_REST}
+SET = @{^"set" ~ !IDENT_REST}
+THEN = @{^"then" ~ !IDENT_REST}
+TO = @{^"to" ~ !IDENT_REST}
+TYPE = @{^"type" ~ !IDENT_REST}
+UNTIL = @{^"until" ~ !IDENT_REST}
+VAR = @{^"var" ~ !IDENT_REST}
+WHILE = @{^"while" ~!IDENT_REST}
+WITH = @{^"with" ~ !IDENT_REST}
+
+// See the ISO 7185 specification for the full list of keywords, this is from section 6.1.2 Special-symbols
+// https://github.com/antlr/grammars-v4/blob/master/pascal/iso7185.pdf
+
+WORD_SYMBOL = @{
+    AND | ARRAY | BEGIN | CASE | CONST | DIV
+    | DO | DOWNTO | ELSE | END | FILE | FOR
+    | FUNCTION | GOTO | IF | IN | LABEL | MOD
+    | NIL | NOT | OF | OR | PACKED | PROCEDURE
+    | PROGRAM  | RECORD | REPEAT | SET | THEN
+    | TO | TYPE | UNTIL | VAR | WHILE | WITH
+}
+
+// We use the ! combinator to make sure that the IDENT is not a keyword
+IDENT = @{!WORD_SYMBOL ~ ASCII_ALPHA ~ IDENT_REST* }
+
+
 LPAREN = {"("}
 RPAREN = {")"}
 LBRACK = {"["}
@@ -40,29 +105,6 @@ STRING_LITERAL = @{
         | !APOSTROPHE ~ ANY)*
     ~ APOSTROPHE)
 }
-
-// Terminals for keywords, note the use of ^ since they are case-insensitive
-// Note that we use the ~ and ! combinators to match the keywords exactly, since
-// if an IDENT starts with a keyword it is still an IDENT, e.g. "program1" is not a keyword
-// Note that we use the @ modifier to mark the rule "atomic", meaning it will not
-// accept whitespace between the tokens.
-PROGRAM = @{^"program" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
-IF = @{^"if" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
-THEN = @{^"then" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
-ELSE = @{^"else" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
-WHILE = @{^"while" ~!(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
-DO = @{^"do" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
-NOT = @{^"not" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
-BEGIN = @{^"begin" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
-END = @{^"end" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
-VAR = @{^"var" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
-PROCEDURE = @{^"procedure" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
-FUNCTION = @{^"function" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
-
-INTEGER = {^"integer" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
-REAL = {^"real" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
-ARRAY = {^"array" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
-OF = {^"of" ~ !(ASCII_ALPHA | ASCII_DIGIT | UNDERSCORE)}
 
 ADDOP = {"+" | "-" } // TODO: "OR" is not yet supported
 RELOP = {"=" | "<" | ">" | "<=" | ">=" | "<>"}
