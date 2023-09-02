@@ -115,7 +115,8 @@ mod tests {
 
     test_can_all!(pascal_parser_can_parse_factor_id_without_err, factor, "foo");
     test_can_all!(pascal_parser_can_parse_factor_id_list_without_err, factor, "foo(x,y,z)");
-    test_can_all!(pascal_parser_can_parse_factor_num_without_err, factor, "42");
+    test_can_all!(pascal_parser_can_parse_factor_const_num_without_err, factor, "42");
+    test_can_all!(pascal_parser_can_parse_factor_const_character_string_without_err, factor, "'foo'");
     test_can_all!(pascal_parser_can_parse_factor_parens_without_err, factor, "(1)");
     test_can_all!(pascal_parser_can_parse_factor_not_id_without_err, factor, "not x");
     test_can_all!(pascal_parser_can_parse_factor_not_id_list_without_err, factor, "not foo(1,2)");

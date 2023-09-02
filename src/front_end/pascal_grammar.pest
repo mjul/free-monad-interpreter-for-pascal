@@ -197,11 +197,13 @@ variable = {
 }
 
 procedure_statement = {
-    IDENT ~ (LPAREN ~ expression_list ~ RPAREN)?
+    (IDENT ~ !LPAREN)
+    | IDENT ~ LPAREN ~ expression_list ~ RPAREN
 }
 
 expression_list = {
-    expression ~ (COMMA ~ expression)*
+    expression ~ !COMMA
+    | expression ~ (COMMA ~ expression_list)?
 }
 
 expression = {
@@ -218,14 +220,28 @@ term = {
     factor ~ (MULOP ~ term)?
 }
 
+// See the ISO 7185 specification, section 6.7.1 Expressions, General
 factor = {
     IDENT ~ !LPAREN
     | (IDENT ~ LPAREN ~ expression_list ~ RPAREN)
-    | num
+    | unsigned_constant
     | (LPAREN ~ expression ~ RPAREN)
     | (NOT ~ factor)
 }
 
+// This is from the ISO 7185 specification, section 6.7.1 unsigned-constant
+// Note that we do not include constant_identifier and NIL for now
+unsigned_constant = {
+    unsigned_number
+    | character_string
+    //| constant_identifier
+    //| NIL
+}
+
+// This is from the ISO 7185 specification, section 6.7.1 character-string
+character_string = { STRING_LITERAL }
+
 sign = { PLUS | MINUS }
 
-num = @{ NUM_INT } // TODO: add the remaining numerical types
+// This is called 'num' in the Tiny Pascal grammar
+unsigned_number = @{ NUM_INT } // TODO: add the remaining numerical types
