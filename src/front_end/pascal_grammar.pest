@@ -215,7 +215,7 @@ simple_expression = {
 }
 
 term = {
-    factor ~ (MULOP ~ factor)*
+    factor ~ (MULOP ~ term)?
 }
 
 factor = {
