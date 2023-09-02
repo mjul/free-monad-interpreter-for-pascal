@@ -15,6 +15,7 @@ pub struct PascalParser;
 #[cfg(test)]
 mod tests {
     use pest::iterators::Pairs;
+
     use super::*;
 
     #[test]
@@ -125,6 +126,12 @@ mod tests {
     test_can_all!(pascal_parser_can_parse_factor_not_not_parens_without_err, factor, "not not (1+2)");
 
     test_can_all!(pascal_parser_can_parse_program_declarations_and_compound_statement_empty_program_without_err, program, "program helloWorld(output); var x:integer; begin end.");
+    test_can_all!(pascal_parser_can_parse_program_subprogram_declarations_and_compound_statement_empty_program_without_err, program,
+        r#"
+        program helloWorld(output);
+        function foo: integer; begin end;
+        begin end."#
+    );
     test_can_all!(pascal_parser_can_parse_program_compound_statement_empty_program_without_err, program, "program helloWorld(output);begin end.");
     test_can_all!(pascal_parser_can_parse_program_hello_world_without_err, program, r#"program helloWorld(output);begin writeLn('Hello, World!') end."#);
 }
