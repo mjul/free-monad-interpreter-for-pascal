@@ -25,6 +25,43 @@ such as lists and trees top down even though the data structures must be constru
 
 It is defined in [`src/interpreters/pretty_printer.rs`](src/intepreters/pretty_printer.rs).
 
+# Compiler Front-End
+The compiler front-end takes a small subset of Pascal as input and produces an AST as output.
+It is written with the [Pest](http://pest.rs) parser generator.
+
+## Pest Grammar and PEG Parser
+The grammar is specified in [`src/front_end/pascal_grammar.pest`](src/front_end/pascal_grammar.pest).
+
+Normally Pascal grammars are given in EBNF with left-recursive rules (e.g. see the ANTLR grammar for Pascal and 
+the standards documents in the Literature section below). However, since Pest is a PEG parser generator, 
+we must adopt the grammar slightly to avoid left-recursion.
+
+The grammar file is annotated to provide commentary on this.
+
+That since Pest does not have a lexer/parser separation, we must provide special rules for *e.g.* whitespace. 
+For example, for the `WHITESPACE` rule, we mark it with `_` to indicate that it should match but not yield any tokens.
+Then, for other rules we use the '@' atomic marker to indicate that they should not match whitespace inside them
+in the few cases where this is needed. 
+
+Identifiers and word-symbols, e.g. keywords such as `program` share the same space of strings, so we must use
+negative lookahead to avoid matching keywords as identifiers and vice versa, see `IDENT` and `WORD_SYMBOL`.
+
+Pest does not analyse the grammar for ambiguities, so we must do that ourselves. Here, a set of test cases 
+are handy, to ensure that we match productions correctly and that we consume the whole input for valid inputs.
+In some cases, before elaborating the grammar, the parser would succeed but only consume part of the input.
+
+For example, in notice the use of `!COMMA` in the `expression_list` production below to ensure that we do not
+match an `expression` only for an input with `expression COMMA expression`.
+
+```
+expression_list = {
+    expression ~ !COMMA
+    | expression ~ (COMMA ~ expression_list)?
+}
+```
+
+With that in mind, the overall conclusion is that Pest is quite nice to work with.
+
 # Literature
 
 ## Pascal
