@@ -166,9 +166,10 @@ expression = {
     simple_expression ~ (RELOP ~ simple_expression)?
 }
 
-// Slightly rewritten to avoid left-recursion
+// Rewritten to avoid left-recursion
+// This one allows a signed term at the end of the expression, unlike the Tiny Pascal grammar
 simple_expression = {
-    (term | (sign ~ term)) ~ (ADDOP ~ simple_expression)?
+    sign? ~ term ~ (ADDOP ~ simple_expression)?
 }
 
 term = {
@@ -186,5 +187,3 @@ factor = {
 sign = { PLUS | MINUS }
 
 num = @{ NUM_INT } // TODO: add the remaining numerical types
-
-
