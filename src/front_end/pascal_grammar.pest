@@ -219,7 +219,7 @@ term = {
 }
 
 factor = {
-    IDENT
+    IDENT ~ !LPAREN
     | (IDENT ~ LPAREN ~ expression_list ~ RPAREN)
     | num
     | (LPAREN ~ expression ~ RPAREN)
