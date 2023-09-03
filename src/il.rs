@@ -23,6 +23,7 @@ pub(crate) enum PascalExpr {
 ///     writeLn('Hello, World!')
 /// end.
 /// ```
+#[derive(Debug)]
 pub(crate) struct ProgramExpr {
     pub(crate) id: Id,
     pub(crate) identifier_list: IdentifierList,
@@ -63,6 +64,7 @@ impl IdentifierList {
 }
 
 // TODO: elaborate on this
+#[derive(Debug)]
 pub(crate) struct DeclarationsExpr();
 
 impl DeclarationsExpr {
@@ -71,6 +73,7 @@ impl DeclarationsExpr {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct SubprogramDeclarations(Vec<SubprogramDeclaration>);
 
 impl SubprogramDeclarations {
@@ -84,9 +87,11 @@ impl SubprogramDeclarations {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct SubprogramDeclaration {}
 
 /// A compound statement consisting of a `begin` and `end` block containing zero or more statements.
+#[derive(Debug)]
 pub(crate) struct CompoundStatement(pub(crate) Vec<Statement>);
 
 impl CompoundStatement {
@@ -95,6 +100,7 @@ impl CompoundStatement {
     }
 }
 
+#[derive(Debug)]
 pub(crate) enum Statement {
     // TODO: variable assignment
     Procedure(ProcedureStatement),
@@ -118,6 +124,7 @@ impl Statement {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct ProcedureStatement(pub(crate) Id, pub(crate) Option<ExpressionList>);
 
 impl ProcedureStatement {
@@ -148,6 +155,7 @@ impl<T> NonEmptyVec<T> {
 }
 
 /// A non-empty list of expressions
+#[derive(Debug)]
 pub(crate) struct ExpressionList(pub(crate) NonEmptyVec<Expression>);
 
 impl ExpressionList {
@@ -157,6 +165,7 @@ impl ExpressionList {
     }
 }
 
+#[derive(Debug)]
 pub(crate) enum Expression {
     Simple(Box<SimpleExpression>),
     Relation(Box<SimpleExpression>, RelOp, Box<SimpleExpression>),
@@ -168,12 +177,14 @@ impl Expression {
     }
 }
 
+#[derive(Debug)]
 pub(crate) enum RelOp {
     Equal,
     NotEqual,
     // TODO: elaborate < > <= >=
 }
 
+#[derive(Debug)]
 pub(crate) enum SimpleExpression {
     Term(Term),
     // TODO: SignTerm(Sign, Term),
@@ -186,6 +197,7 @@ impl SimpleExpression {
     }
 }
 
+#[derive(Debug)]
 pub(crate) enum Term {
     Factor(Factor),
 }
@@ -196,6 +208,7 @@ impl Term {
     }
 }
 
+#[derive(Debug)]
 pub(crate) enum Factor {
     Id(Id),
     IdWithParams(Id, ExpressionList),
@@ -213,11 +226,13 @@ impl Factor {
     }
 }
 
+#[derive(Debug)]
 pub(crate) enum Sign {
     Plus,
     Minus,
 }
 
+#[derive(Debug)]
 pub(crate) enum AddOp {
     Plus,
     Minus,
