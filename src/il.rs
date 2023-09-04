@@ -3,7 +3,6 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
-
 /// Pascal language expressions, everything between `program` and `end.`
 pub(crate) enum PascalExpr {
     Program(ProgramExpr),
@@ -91,7 +90,7 @@ impl SubprogramDeclarations {
 pub(crate) struct SubprogramDeclaration {}
 
 /// A compound statement consisting of a `begin` and `end` block containing zero or more statements.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct CompoundStatement(pub(crate) Vec<Statement>);
 
 impl CompoundStatement {
@@ -100,7 +99,7 @@ impl CompoundStatement {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum Statement {
     // TODO: variable assignment
     Procedure(ProcedureStatement),
@@ -124,7 +123,7 @@ impl Statement {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct ProcedureStatement(pub(crate) Id, pub(crate) Option<ExpressionList>);
 
 impl ProcedureStatement {
@@ -155,7 +154,7 @@ impl<T> NonEmptyVec<T> {
 }
 
 /// A non-empty list of expressions
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct ExpressionList(pub(crate) NonEmptyVec<Expression>);
 
 impl ExpressionList {
@@ -165,7 +164,7 @@ impl ExpressionList {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum Expression {
     Simple(Box<SimpleExpression>),
     Relation(Box<SimpleExpression>, RelOp, Box<SimpleExpression>),
@@ -177,14 +176,14 @@ impl Expression {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum RelOp {
     Equal,
     NotEqual,
     // TODO: elaborate < > <= >=
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum SimpleExpression {
     Term(Term),
     // TODO: SignTerm(Sign, Term),
@@ -197,7 +196,7 @@ impl SimpleExpression {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum Term {
     Factor(Factor),
 }
@@ -208,7 +207,7 @@ impl Term {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum Factor {
     Id(Id),
     IdWithParams(Id, ExpressionList),
@@ -224,15 +223,16 @@ impl Factor {
     pub(crate) fn string(s: &str) -> Self {
         Self::String(String::from(s))
     }
+    pub(crate) fn id(id: Id) -> Self { Self::Id(id) }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum Sign {
     Plus,
     Minus,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum AddOp {
     Plus,
     Minus,
@@ -254,7 +254,7 @@ impl Display for TokenError {
 impl Error for TokenError {}
 
 /// Identifier
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Id(String);
 
 impl Id {
@@ -306,7 +306,7 @@ mod tests {
                     NonEmptyVec::new(vec![Expression::simple(SimpleExpression::term(
                         Term::factor(Factor::string("Hello, World!")),
                     ))])
-                    .unwrap(),
+                        .unwrap(),
                 ),
             ))]),
         );
