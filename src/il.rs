@@ -140,7 +140,7 @@ pub(crate) enum Statement {
     Assignment(AssignmentStatement),
     Procedure(ProcedureStatement),
     Compound(CompoundStatement),
-    // TODO: if then else
+    IfThenElse(IfThenElseStatement),
     WhileDo(WhileDoStatement),
 }
 
@@ -160,6 +160,9 @@ impl Statement {
     }
     pub(crate) fn compound(cs: CompoundStatement) -> Statement {
         Statement::Compound(cs)
+    }
+    pub(crate) fn if_then_else(ites: IfThenElseStatement) -> Statement {
+        Statement::IfThenElse(ites)
     }
     pub(crate) fn while_do(ws: WhileDoStatement) -> Statement {
         Statement::WhileDo(ws)
@@ -205,6 +208,18 @@ impl ProcedureStatement {
         Self(id, Some(params))
     }
 }
+
+
+/// An `if` `then` `else` statement
+#[derive(Debug, Clone)]
+pub(crate) struct IfThenElseStatement(pub(crate) Box<Expression>, pub(crate) Box<Statement>, pub(crate) Box<Statement>);
+
+impl IfThenElseStatement {
+    pub(crate) fn new(expr: Expression, then_stmt: Statement, else_stmt: Statement) -> Self {
+        Self(Box::new(expr), Box::new(then_stmt), Box::new(else_stmt))
+    }
+}
+
 
 /// A `while` *expression* `do` statement
 #[derive(Debug, Clone)]
