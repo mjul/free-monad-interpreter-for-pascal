@@ -17,8 +17,8 @@ use std::fmt::{Debug, Formatter, Pointer};
 use std::ops::Deref;
 
 use crate::il::{
-    CompoundStatement, Expression, ExpressionList, Factor, Id, IdentifierList, NonEmptyVec,
-    PascalExpr, ProcedureStatement, SimpleExpression, Statement, Term,
+    AssignmentStatement, CompoundStatement, Expression, ExpressionList, Factor, Id, IdentifierList,
+    NonEmptyVec, PascalExpr, ProcedureStatement, SimpleExpression, Statement, Term, Variable,
 };
 
 use super::super::il::ProgramExpr;
@@ -375,9 +375,40 @@ where
     TNext: Default,
 {
     match stmt {
-        Statement::Assignment(asn) => todo!("assignment"),
+        Statement::Assignment(asn) => print_program_from_assignment_statement(asn, k),
         Statement::Procedure(ps) => print_program_from_procedure_statement(ps, k),
         Statement::Compound(cs) => PrintProgram::write("{ compound }".to_string(), k),
+    }
+}
+
+fn print_program_from_assignment_statement<TNext>(
+    asn: &AssignmentStatement,
+    k: PrintProgram<TNext>,
+) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    match asn {
+        AssignmentStatement(lvar, val) => print_program_from_variable(
+            lvar,
+            PrintProgram::write(" := ".to_string(), print_program_from_expression(val, k)),
+        ),
+    }
+}
+
+fn print_program_from_variable<TNext>(var: &Variable, k: PrintProgram<TNext>) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    match var {
+        Variable::Id(id) => print_program_from_id(id, k),
+        Variable::ArrayIndex(id, expr) => print_program_from_id(
+            id,
+            PrintProgram::write(
+                "[".to_string(),
+                print_program_from_expression(expr, PrintProgram::write("]".to_string(), k)),
+            ),
+        ),
     }
 }
 
@@ -464,7 +495,7 @@ where
     match f {
         Factor::Id(id) => print_program_from_id(id, k),
         Factor::IdWithParams(_, _) => todo!(),
-        Factor::Number(_) => todo!(),
+        Factor::Number(n) => PrintProgram::write(n.to_string(), k),
         Factor::Parens(_) => todo!(),
         Factor::Not(_) => todo!(),
         Factor::String(s) => print_program_from_string(s, k),
@@ -510,13 +541,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::examples::hello_world;
+    use crate::examples;
 
     use super::*;
 
     #[test]
     fn pretty_print_hello_world() {
-        let p = hello_world();
+        let p = examples::hello_world();
         let actual = pretty_print(p, 2);
         let expected = r#"
 program helloWorld(output);
@@ -528,5 +559,16 @@ end."#
             .to_string();
 
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn pretty_print_fizzbuzz() {
+        let p = examples::fizzbuzz();
+        let actual = pretty_print(p, 2);
+        // TODO: elaborate this, for now it is just a smoke test
+        assert!(actual.contains("program fizzbuzz(output);"));
+        assert!(actual.contains("'Fizz'"));
+        assert!(actual.contains("'Buzz'"));
+        assert!(actual.contains("'FizzBuzz'"));
     }
 }
