@@ -64,13 +64,49 @@ impl IdentifierList {
 
 // TODO: elaborate on this
 #[derive(Debug)]
-pub(crate) struct DeclarationsExpr();
+pub(crate) struct DeclarationsExpr(Vec<VarDeclaration>);
 
 impl DeclarationsExpr {
+    /// Create an empty declarations expression (no var declarations)
     pub fn empty() -> Self {
-        Self {}
+        Self(vec![])
+    }
+    /// Create a declarations expression with a list of var declarations
+    pub fn new(vds: Vec<VarDeclaration>) -> Self {
+        Self(vds)
     }
 }
+
+/// Variable declaration (one or more vars of a given type)
+// TODO: add type
+#[derive(Debug)]
+pub(crate) struct VarDeclaration(pub(crate) IdentifierList, pub(crate) Type);
+
+impl VarDeclaration {
+    pub(crate) fn new(ids: IdentifierList, ty: Type) -> Self {
+        Self(ids, ty)
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum Type {
+    StandardType(StandardType),
+    // TODO: arrays
+}
+
+impl Type {
+    pub(crate) fn standard(standard_type: StandardType) -> Self {
+        Self::StandardType(standard_type)
+    }
+}
+
+
+#[derive(Debug)]
+pub(crate) enum StandardType {
+    Integer,
+    Real,
+}
+
 
 #[derive(Debug)]
 pub(crate) struct SubprogramDeclarations(Vec<SubprogramDeclaration>);
@@ -101,7 +137,7 @@ impl CompoundStatement {
 
 #[derive(Debug, Clone)]
 pub(crate) enum Statement {
-    // TODO: variable assignment
+    Assignment(AssignmentStatement),
     Procedure(ProcedureStatement),
     Compound(CompoundStatement),
     // TODO: if then else
@@ -115,6 +151,10 @@ pub(crate) enum Statement {
 /// - an `if` `then` `else` statement
 /// - a `while` `do` statement
 impl Statement {
+    /// Variable assignment statement
+    pub(crate) fn assignment(vas: AssignmentStatement) -> Statement {
+        Statement::Assignment(vas)
+    }
     pub(crate) fn procedure(ps: ProcedureStatement) -> Statement {
         Statement::Procedure(ps)
     }
@@ -122,6 +162,34 @@ impl Statement {
         Statement::Compound(cs)
     }
 }
+
+#[derive(Debug, Clone)]
+pub(crate) struct AssignmentStatement(pub(crate) Variable, pub(crate) Expression);
+
+impl AssignmentStatement {
+    pub(crate) fn new(lvar: Variable, value: Expression) -> Self {
+        Self(lvar, value)
+    }
+}
+
+/// A variable, simplified: here just an identifier or an array index
+#[derive(Debug, Clone)]
+pub(crate) enum Variable {
+    Id(Id),
+    ArrayIndex(Id, Expression),
+}
+
+impl Variable {
+    /// A simple named variable
+    pub(crate) fn id(id: Id) -> Self {
+        Self::Id(id)
+    }
+    /// A position in a named array
+    pub(crate) fn array_index(id: Id, index: Expression) -> Self {
+        Self::ArrayIndex(id, index)
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub(crate) struct ProcedureStatement(pub(crate) Id, pub(crate) Option<ExpressionList>);
@@ -224,6 +292,7 @@ impl Factor {
         Self::String(String::from(s))
     }
     pub(crate) fn id(id: Id) -> Self { Self::Id(id) }
+    pub(crate) fn number(n: i32) -> Self { Self::Number(n) }
 }
 
 #[derive(Debug, Clone)]

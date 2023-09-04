@@ -375,6 +375,7 @@ where
     TNext: Default,
 {
     match stmt {
+        Statement::Assignment(asn) => todo!("assignment"),
         Statement::Procedure(ps) => print_program_from_procedure_statement(ps, k),
         Statement::Compound(cs) => PrintProgram::write("{ compound }".to_string(), k),
     }
