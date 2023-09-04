@@ -3,6 +3,11 @@
 Writing a free monad interpreter for a tiny subset of Pascal, in Rust.
 Let's see where this goes...
 
+This project demonstrates:
+- using the Pest PEG (programmable expression grammar) parser generator to build a compiler front-end for a small subset of Pascal
+- using the free monad pattern to build an interpreter for a simple language, in this case for pretty-printing
+
+
 # Why Pascal
 
 Pascal is a language from 1970 by Niklaus Wirth.
