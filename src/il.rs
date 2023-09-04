@@ -12,7 +12,6 @@ pub(crate) enum PascalExpr {
     CompoundStatement(CompoundStatement),
 }
 
-
 /// Pascal Program Expression, `program`  ... `.`
 ///
 /// Example Pascal Program:
@@ -100,13 +99,11 @@ impl Type {
     }
 }
 
-
 #[derive(Debug)]
 pub(crate) enum StandardType {
     Integer,
     Real,
 }
-
 
 #[derive(Debug)]
 pub(crate) struct SubprogramDeclarations(Vec<SubprogramDeclaration>);
@@ -196,7 +193,6 @@ impl Variable {
     }
 }
 
-
 #[derive(Debug, Clone)]
 pub(crate) struct ProcedureStatement(pub(crate) Id, pub(crate) Option<ExpressionList>);
 
@@ -209,17 +205,19 @@ impl ProcedureStatement {
     }
 }
 
-
 /// An `if` `then` `else` statement
 #[derive(Debug, Clone)]
-pub(crate) struct IfThenElseStatement(pub(crate) Box<Expression>, pub(crate) Box<Statement>, pub(crate) Box<Statement>);
+pub(crate) struct IfThenElseStatement(
+    pub(crate) Box<Expression>,
+    pub(crate) Box<Statement>,
+    pub(crate) Box<Statement>,
+);
 
 impl IfThenElseStatement {
     pub(crate) fn new(expr: Expression, then_stmt: Statement, else_stmt: Statement) -> Self {
         Self(Box::new(expr), Box::new(then_stmt), Box::new(else_stmt))
     }
 }
-
 
 /// A `while` *expression* `do` statement
 #[derive(Debug, Clone)]
@@ -272,7 +270,7 @@ impl Expression {
         Self::Simple(Box::new(simple_expression))
     }
     /// Create a relation expression, *e.g.* `a < b`
-    pub(crate) fn relation(lhs: SimpleExpression, relation:RelOp, rhs:SimpleExpression) -> Self {
+    pub(crate) fn relation(lhs: SimpleExpression, relation: RelOp, rhs: SimpleExpression) -> Self {
         Self::Relation(Box::new(lhs), relation, Box::new(rhs))
     }
 }
@@ -285,6 +283,7 @@ pub(crate) enum RelOp {
     LessThanOrEqual,
     GreaterThan,
     GreaterThanOrEqual,
+    // TODO: IN
 }
 
 #[derive(Debug, Clone)]
@@ -303,11 +302,15 @@ impl SimpleExpression {
 #[derive(Debug, Clone)]
 pub(crate) enum Term {
     Factor(Factor),
+    MulOp(Box<Term>, MulOp, Box<Factor>),
 }
 
 impl Term {
     pub(crate) fn factor(factor: Factor) -> Self {
         Self::Factor(factor)
+    }
+    pub(crate) fn mul_op(rhs: Term, mul_op: MulOp, lhs: Factor) -> Self {
+        Self::MulOp(Box::new(rhs), mul_op, Box::new(lhs))
     }
 }
 
@@ -327,8 +330,12 @@ impl Factor {
     pub(crate) fn string(s: &str) -> Self {
         Self::String(String::from(s))
     }
-    pub(crate) fn id(id: Id) -> Self { Self::Id(id) }
-    pub(crate) fn number(n: i32) -> Self { Self::Number(n) }
+    pub(crate) fn id(id: Id) -> Self {
+        Self::Id(id)
+    }
+    pub(crate) fn number(n: i32) -> Self {
+        Self::Number(n)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -342,6 +349,15 @@ pub(crate) enum AddOp {
     Plus,
     Minus,
     Or,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum MulOp {
+    Star,
+    Slash,
+    Div,
+    Mod,
+    And,
 }
 
 /// Error representing an invalid tokens
@@ -385,7 +401,6 @@ impl Display for Id {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -411,7 +426,7 @@ mod tests {
                     NonEmptyVec::new(vec![Expression::simple(SimpleExpression::term(
                         Term::factor(Factor::string("Hello, World!")),
                     ))])
-                        .unwrap(),
+                    .unwrap(),
                 ),
             ))]),
         );

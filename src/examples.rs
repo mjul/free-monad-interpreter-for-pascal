@@ -6,7 +6,7 @@
 //! - it is used by the tests
 //! - it is useful for demonstration purposes
 
-use crate::il::{AssignmentStatement, CompoundStatement, DeclarationsExpr, Expression, ExpressionList, Factor, Id, IdentifierList, IfThenElseStatement, NonEmptyVec, ProcedureStatement, ProgramExpr, RelOp, SimpleExpression, StandardType, Statement, SubprogramDeclarations, Term, Type, VarDeclaration, Variable, WhileDoStatement};
+use crate::il::{AssignmentStatement, CompoundStatement, DeclarationsExpr, Expression, ExpressionList, Factor, Id, IdentifierList, IfThenElseStatement, MulOp, NonEmptyVec, ProcedureStatement, ProgramExpr, RelOp, SimpleExpression, StandardType, Statement, SubprogramDeclarations, Term, Type, VarDeclaration, Variable, WhileDoStatement};
 
 const HELLO_WORLD_PAS: &'static str = r#"
             program helloWorld(output);
@@ -91,7 +91,11 @@ pub(crate) fn fizzbuzz() -> ProgramExpr {
             IfThenElseStatement::new(cond, then_stmt, else_stmt));
     let mod_eq = |id, divisor, remainder|
         Expression::relation(
-            SimpleExpression::term(Term::factor(Factor::id(Id::new_from_str(id).unwrap()))),
+            SimpleExpression::term(
+                Term::mul_op(
+                    Term::factor(Factor::id(Id::new_from_str(id).unwrap())),
+                    MulOp::Mod,
+                    Factor::number(divisor))),
             RelOp::Equal,
             SimpleExpression::term(Term::factor(Factor::number(remainder))));
 
@@ -107,18 +111,17 @@ pub(crate) fn fizzbuzz() -> ProgramExpr {
             vec![
                 assign_int("i", 1),
                 while_leq("i", 100,
-                    if_then_else(
-                        mod_eq("i", 15, 0),
-                          write_ln_str("FizzBuzz"),
-                        if_then_else(
-                            mod_eq("i", 3, 0),
-                            write_ln_str("Fizz"),
-                            if_then_else(
-                                mod_eq("i", 5, 0),
-                                write_ln_str("Buzz"),
-                                write_ln_term(Term::factor(Factor::id(Id::new_from_str("i").unwrap())))
-
-                )))),
+                          if_then_else(
+                              mod_eq("i", 15, 0),
+                              write_ln_str("FizzBuzz"),
+                              if_then_else(
+                                  mod_eq("i", 3, 0),
+                                  write_ln_str("Fizz"),
+                                  if_then_else(
+                                      mod_eq("i", 5, 0),
+                                      write_ln_str("Buzz"),
+                                      write_ln_term(Term::factor(Factor::id(Id::new_from_str("i").unwrap()))),
+                                  )))),
             ]),
     )
 }
