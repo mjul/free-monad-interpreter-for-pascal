@@ -342,13 +342,13 @@ where
 {
     match xs.len() {
         0 => k,
+        1 => print_x(&xs[0], k),
         _ => {
             let (head, tail) = xs.split_first().unwrap();
-            let k = match tail.len() {
-                0 => k,
-                _ => print_program_interpose(tail, print_x, print_interpose, k),
-            };
-            print_x(head, k)
+            print_x(
+                head,
+                print_interpose(print_program_interpose(tail, print_x, print_interpose, k)),
+            )
         }
     }
 }
@@ -445,10 +445,7 @@ where
                 expr,
                 PrintProgram::inc_indent(PrintProgram::write_ln(
                     " do".to_string(),
-                    print_program_from_statement(
-                        stmt,
-                        PrintProgram::dec_indent(PrintProgram::write_ln("".to_string(), k)),
-                    ),
+                    print_program_from_statement(stmt, PrintProgram::dec_indent(k)),
                 )),
             ),
         ),
@@ -613,6 +610,7 @@ end."#
         assert!(actual.contains("'Fizz'"));
         assert!(actual.contains("'Buzz'"));
         assert!(actual.contains("'FizzBuzz'"));
+        assert!(actual.contains("i := 1;"));
         assert!(actual.contains("while i <= 100 do"));
     }
 }
