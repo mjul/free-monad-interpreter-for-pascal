@@ -50,8 +50,9 @@ Pest does not analyse the grammar for ambiguities, so we must do that ourselves.
 are handy, to ensure that we match productions correctly and that we consume the whole input for valid inputs.
 In some cases, before elaborating the grammar, the parser would succeed but only consume part of the input.
 
-For example, in notice the use of `!COMMA` in the `expression_list` production below to ensure that we do not
-match an `expression` only for an input with `expression COMMA expression`.
+For example, notice the use of `!COMMA` in the `expression_list` production below to ensure that we do not
+match an `expression` only for an input with `expression COMMA expression`. So, it is not as eager in matching 
+as one might think.
 
 ```
 expression_list = {
