@@ -18,7 +18,8 @@ use std::ops::Deref;
 
 use crate::il::{
     AssignmentStatement, CompoundStatement, Expression, ExpressionList, Factor, Id, IdentifierList,
-    NonEmptyVec, PascalExpr, ProcedureStatement, SimpleExpression, Statement, Term, Variable,
+    NonEmptyVec, PascalExpr, ProcedureStatement, RelOp, SimpleExpression, Statement, Term,
+    Variable, WhileDoStatement,
 };
 
 use super::super::il::ProgramExpr;
@@ -377,7 +378,9 @@ where
     match stmt {
         Statement::Assignment(asn) => print_program_from_assignment_statement(asn, k),
         Statement::Procedure(ps) => print_program_from_procedure_statement(ps, k),
+        // TODO: implement this
         Statement::Compound(cs) => PrintProgram::write("{ compound }".to_string(), k),
+        Statement::WhileDo(wds) => print_program_from_while_do_statement(wds, k),
     }
 }
 
@@ -428,6 +431,30 @@ where
     }
 }
 
+fn print_program_from_while_do_statement<TNext>(
+    wds: &WhileDoStatement,
+    k: PrintProgram<TNext>,
+) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    match wds {
+        WhileDoStatement(expr, stmt) => PrintProgram::write(
+            "while ".to_string(),
+            print_program_from_expression(
+                expr,
+                PrintProgram::inc_indent(PrintProgram::write_ln(
+                    " do".to_string(),
+                    print_program_from_statement(
+                        stmt,
+                        PrintProgram::dec_indent(PrintProgram::write_ln("".to_string(), k)),
+                    ),
+                )),
+            ),
+        ),
+    }
+}
+
 fn print_program_from_expression_list<TNext>(
     el: &ExpressionList,
     k: PrintProgram<TNext>,
@@ -463,7 +490,23 @@ where
 {
     match el {
         Expression::Simple(se) => print_program_from_simple_expression(se.deref(), k),
-        Expression::Relation(_, _, _) => todo!(),
+        Expression::Relation(lhs, relop, rhs) => print_program_from_simple_expression(
+            lhs.deref(),
+            PrintProgram::write(
+                format!(
+                    " {} ",
+                    match relop {
+                        RelOp::Equal => "=",
+                        RelOp::NotEqual => "<>",
+                        RelOp::LessThan => "<",
+                        RelOp::LessThanOrEqual => "<=",
+                        RelOp::GreaterThan => ">",
+                        RelOp::GreaterThanOrEqual => ">=",
+                    }
+                ),
+                print_program_from_simple_expression(rhs, k),
+            ),
+        ),
     }
 }
 
@@ -570,5 +613,6 @@ end."#
         assert!(actual.contains("'Fizz'"));
         assert!(actual.contains("'Buzz'"));
         assert!(actual.contains("'FizzBuzz'"));
+        assert!(actual.contains("while i <= 100 do"));
     }
 }

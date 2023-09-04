@@ -141,7 +141,7 @@ pub(crate) enum Statement {
     Procedure(ProcedureStatement),
     Compound(CompoundStatement),
     // TODO: if then else
-    // TODO: while do
+    WhileDo(WhileDoStatement),
 }
 
 /// A statement:
@@ -160,6 +160,9 @@ impl Statement {
     }
     pub(crate) fn compound(cs: CompoundStatement) -> Statement {
         Statement::Compound(cs)
+    }
+    pub(crate) fn while_do(ws: WhileDoStatement) -> Statement {
+        Statement::WhileDo(ws)
     }
 }
 
@@ -203,6 +206,16 @@ impl ProcedureStatement {
     }
 }
 
+/// A `while` *expression* `do` statement
+#[derive(Debug, Clone)]
+pub(crate) struct WhileDoStatement(pub(crate) Box<Expression>, pub(crate) Box<Statement>);
+
+impl WhileDoStatement {
+    pub(crate) fn new(expr: Expression, statement: Statement) -> Self {
+        Self(Box::new(expr), Box::new(statement))
+    }
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct NonEmptyVec<T>(pub(crate) Vec<T>);
 
@@ -239,8 +252,13 @@ pub(crate) enum Expression {
 }
 
 impl Expression {
+    /// Create a simple expression
     pub(crate) fn simple(simple_expression: SimpleExpression) -> Self {
         Self::Simple(Box::new(simple_expression))
+    }
+    /// Create a relation expression, *e.g.* `a < b`
+    pub(crate) fn relation(lhs: SimpleExpression, relation:RelOp, rhs:SimpleExpression) -> Self {
+        Self::Relation(Box::new(lhs), relation, Box::new(rhs))
     }
 }
 
@@ -248,7 +266,10 @@ impl Expression {
 pub(crate) enum RelOp {
     Equal,
     NotEqual,
-    // TODO: elaborate < > <= >=
+    LessThan,
+    LessThanOrEqual,
+    GreaterThan,
+    GreaterThanOrEqual,
 }
 
 #[derive(Debug, Clone)]

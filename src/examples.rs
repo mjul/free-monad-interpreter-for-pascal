@@ -6,7 +6,7 @@
 //! - it is used by the tests
 //! - it is useful for demonstration purposes
 
-use crate::il::{AssignmentStatement, CompoundStatement, DeclarationsExpr, Expression, ExpressionList, Factor, Id, IdentifierList, NonEmptyVec, ProcedureStatement, ProgramExpr, SimpleExpression, StandardType, Statement, SubprogramDeclarations, Term, Type, VarDeclaration, Variable};
+use crate::il::{AssignmentStatement, CompoundStatement, DeclarationsExpr, Expression, ExpressionList, Factor, Id, IdentifierList, NonEmptyVec, ProcedureStatement, ProgramExpr, RelOp, SimpleExpression, StandardType, Statement, SubprogramDeclarations, Term, Type, VarDeclaration, Variable, WhileDoStatement};
 
 const HELLO_WORLD_PAS: &'static str = r#"
             program helloWorld(output);
@@ -78,6 +78,15 @@ pub(crate) fn fizzbuzz() -> ProgramExpr {
                 Expression::simple(
                     SimpleExpression::term(Term::factor(Factor::number(value))))));
 
+    let while_leq = |id, limit_inclusive, body|
+        Statement::while_do(
+            WhileDoStatement::new(
+                Expression::relation(
+                    SimpleExpression::term(Term::factor(Factor::id(Id::new_from_str(id).unwrap()))),
+                    RelOp::LessThanOrEqual,
+                    SimpleExpression::term(Term::factor(Factor::number(limit_inclusive)))),
+                body));
+
     ProgramExpr::new(
         Id::new_from_str("fizzbuzz").unwrap(),
         IdentifierList::new(NonEmptyVec::single(Id::new_from_str("output").unwrap())),
@@ -89,7 +98,10 @@ pub(crate) fn fizzbuzz() -> ProgramExpr {
         CompoundStatement::new(
             vec![
                 assign_int("i", 1),
-                // TODO: while do
+                while_leq("i", 100,
+                    // TODO: build up the correct if then else structure
+                    write_ln_str("FizzBuzz")
+                ),
                 // TODO: if then else
                 write_ln_str("FizzBuzz"),
                 write_ln_str("Fizz"),
