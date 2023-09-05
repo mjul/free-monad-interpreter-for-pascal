@@ -49,7 +49,7 @@ impl ProgramExpr {
 }
 
 /// Non-empty list of identifiers
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct IdentifierList(pub(crate) NonEmptyVec<Id>);
 
 impl IdentifierList {
@@ -62,7 +62,7 @@ impl IdentifierList {
 }
 
 // TODO: elaborate on this
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub(crate) struct DeclarationsExpr(Vec<VarDeclaration>);
 
 impl DeclarationsExpr {
@@ -78,7 +78,7 @@ impl DeclarationsExpr {
 
 /// Variable declaration (one or more vars of a given type)
 // TODO: add type
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct VarDeclaration(pub(crate) IdentifierList, pub(crate) Type);
 
 impl VarDeclaration {
@@ -87,7 +87,7 @@ impl VarDeclaration {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Type {
     StandardType(StandardType),
     // TODO: arrays
@@ -99,7 +99,7 @@ impl Type {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum StandardType {
     Integer,
     Real,
@@ -229,7 +229,7 @@ impl WhileDoStatement {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct NonEmptyVec<T>(pub(crate) Vec<T>);
 
 impl<T> NonEmptyVec<T> {

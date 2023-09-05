@@ -132,6 +132,7 @@ fn il_statement_list_from_optional_statements(
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
 }
+
 fn il_statement_list_from(pair: &Pair<Rule>) -> Result<Vec<il::Statement>, ConversionError> {
     match &pair.as_rule() {
         Rule::statement_list => {
@@ -340,21 +341,21 @@ fn il_program_from(pair: Pair<Rule>) -> Result<il::ProgramExpr, ConversionError>
             let inners: Vec<Pair<Rule>> = pair.into_inner().into_iter().collect();
             match &inners[..] {
                 [_program, id, _lparen, identifier_list, _rparen, _semicolon, declarations, subprogram_declarations, compound_statement, ..] =>
-                {
-                    let id = il_id_from(&id)?;
-                    let identifier_list = il_identifier_list_from(identifier_list)?;
-                    let declarations = il_declarations_from(declarations)?;
-                    let subprogram_declarations =
-                        il_subprogram_declarations_from(subprogram_declarations)?;
-                    let compound_statement = il_compound_statement_from(compound_statement)?;
-                    Ok(il::ProgramExpr::new(
-                        id,
-                        identifier_list,
-                        declarations,
-                        subprogram_declarations,
-                        compound_statement,
-                    ))
-                }
+                    {
+                        let id = il_id_from(&id)?;
+                        let identifier_list = il_identifier_list_from(identifier_list)?;
+                        let declarations = il_declarations_from(declarations)?;
+                        let subprogram_declarations =
+                            il_subprogram_declarations_from(subprogram_declarations)?;
+                        let compound_statement = il_compound_statement_from(compound_statement)?;
+                        Ok(il::ProgramExpr::new(
+                            id,
+                            identifier_list,
+                            declarations,
+                            subprogram_declarations,
+                            compound_statement,
+                        ))
+                    }
                 _ => Err(ConversionError::ConversionError(
                     "Unexpected number of pairs under program rule".to_string(),
                 )),
@@ -385,8 +386,11 @@ fn parse_program_string(input: &str) -> Result<il::ProgramExpr, FrontEndError> {
 
 #[cfg(test)]
 mod tests {
-    use pest::iterators::Pairs;
     use paste::paste;
+    use pest::iterators::Pairs;
+
+    use crate::il::{DeclarationsExpr, VarDeclaration};
+
     use super::*;
 
     #[test]
@@ -471,6 +475,7 @@ mod tests {
     test_can_all!(statement_compound_statement, statement, "begin x:=1;y:=2 end");
     test_can_all!(statement_if_then_else, statement, "if x>10 then x:=10 else x:=x");
     test_can_all!(statement_while, statement, "while x<10 do x:=x+1");
+    test_can_all!(statement_while_leq, statement, "while x<=10 do x:=x+1");
 
     test_can_all!(variable_simple, variable, "x");
     test_can_all!(variable_array, variable, "x[1]");
@@ -480,7 +485,12 @@ mod tests {
     test_can_all!(expression_list_multiple_3, expression_list, "1,2,1+2");
 
     test_can_all!(expression_simple, expression, "(+1)");
-    test_can_all!(expression_relop, expression, "x < 2");
+    test_can_all!(expression_relop_eq, expression, "x = 2");
+    test_can_all!(expression_relop_neq, expression, "x <> 2");
+    test_can_all!(expression_relop_le, expression, "x < 2");
+    test_can_all!(expression_relop_leq, expression, "x <= 2");
+    test_can_all!(expression_relop_gt, expression, "x > 2");
+    test_can_all!(expression_relop_gte, expression, "x >= 2");
 
     test_can_all!(simple_expression_term, simple_expression, "x");
     test_can_all!(simple_expression_sign_term, simple_expression, "-x");
@@ -529,8 +539,8 @@ mod tests {
                         il::Term::factor(il::Factor::string("Hello, World!")),
                     ))])
                         .unwrap(),
-                    ),
                 ),
+            ),
             )]),
         );
 
