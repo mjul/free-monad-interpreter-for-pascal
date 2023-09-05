@@ -504,9 +504,9 @@ fn il_factor_from(pair: &Pair<Rule>) -> Result<il::Factor, ConversionError> {
 
 fn il_sign_from(pair: &Pair<Rule>) -> Result<il::Sign, ConversionError> {
     match &pair.as_rule() {
-        Rule::sign => match pair.as_str() {
-            "+" => Ok(il::Sign::Plus),
-            "-" => Ok(il::Sign::Minus),
+        Rule::sign => match pair.clone().into_inner().next().map(|p| p.as_rule()) {
+            Some(Rule::PLUS) => Ok(il::Sign::Plus),
+            Some(Rule::MINUS) => Ok(il::Sign::Minus),
             _ => Err(ConversionError::ConversionError(format!(
                 "Unexpected sign: {}",
                 pair.as_str()
