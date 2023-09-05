@@ -249,6 +249,16 @@ fn il_statement_from(pair: &Pair<Rule>) -> Result<il::Statement, ConversionError
                             _ => todo!()
                         }
                     },
+                    Rule::WHILE => {
+                        match &inners[..] {
+                            [_while, expr, _do, stmt] => {
+                                let e = il_expression_from(expr)?;
+                                let s = il_statement_from(stmt)?;
+                                Ok(il::Statement::while_do(il::WhileDoStatement::new(e, s)))
+                            }
+                            _ => todo!("Unexpected number of pairs in WHILE rule: {:?}", inners),
+                        }
+                    },
                     _ => todo!("il_statement_from inner: {:?}", first_inner.as_rule()),
                 },
             }
