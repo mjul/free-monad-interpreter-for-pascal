@@ -382,7 +382,12 @@ fn il_expression_from(pair: &Pair<Rule>) -> Result<il::Expression, ConversionErr
 fn il_relop_from(pair: &Pair<Rule>) -> Result<il::RelOp, ConversionError> {
     match &pair.as_rule() {
         Rule::RELOP => {
-            let inner_rules: Vec<Rule> = pair.clone().into_inner().into_iter().map(|p| p.as_rule()).collect();
+            let inner_rules: Vec<Rule> = pair
+                .clone()
+                .into_inner()
+                .into_iter()
+                .map(|p| p.as_rule())
+                .collect();
             match &inner_rules[..] {
                 [Rule::EQUAL] => Ok(il::RelOp::Equal),
                 [Rule::NOT_EQUAL] => Ok(il::RelOp::NotEqual),
@@ -524,21 +529,21 @@ fn il_program_from(pair: Pair<Rule>) -> Result<il::ProgramExpr, ConversionError>
             let inners: Vec<Pair<Rule>> = pair.into_inner().into_iter().collect();
             match &inners[..] {
                 [_program, id, _lparen, identifier_list, _rparen, _semicolon, declarations, subprogram_declarations, compound_statement, ..] =>
-                    {
-                        let id = il_id_from(&id)?;
-                        let identifier_list = il_identifier_list_from(identifier_list)?;
-                        let declarations = il_declarations_from(declarations)?;
-                        let subprogram_declarations =
-                            il_subprogram_declarations_from(subprogram_declarations)?;
-                        let compound_statement = il_compound_statement_from(compound_statement)?;
-                        Ok(il::ProgramExpr::new(
-                            id,
-                            identifier_list,
-                            declarations,
-                            subprogram_declarations,
-                            compound_statement,
-                        ))
-                    }
+                {
+                    let id = il_id_from(&id)?;
+                    let identifier_list = il_identifier_list_from(identifier_list)?;
+                    let declarations = il_declarations_from(declarations)?;
+                    let subprogram_declarations =
+                        il_subprogram_declarations_from(subprogram_declarations)?;
+                    let compound_statement = il_compound_statement_from(compound_statement)?;
+                    Ok(il::ProgramExpr::new(
+                        id,
+                        identifier_list,
+                        declarations,
+                        subprogram_declarations,
+                        compound_statement,
+                    ))
+                }
                 _ => Err(ConversionError::ConversionError(
                     "Unexpected number of pairs under program rule".to_string(),
                 )),
@@ -596,7 +601,7 @@ mod tests {
 
     macro_rules! test_can_all {
         ($rule:ident, $case:ident, $input:expr) => {
-            paste!{
+            paste! {
                 #[test]
                 fn [<pascal_parser_can_parse_ $rule _ $case _without_err>]() {
                     let result_pairs = PascalParser::parse(Rule::$rule, $input);
