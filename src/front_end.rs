@@ -7,7 +7,6 @@
 use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
-use crate::front_end::Rule::statement;
 
 use crate::il;
 use crate::il::{DeclarationsExpr, StandardType, Type};
@@ -241,14 +240,14 @@ fn il_statement_from(pair: &Pair<Rule>) -> Result<il::Statement, ConversionError
                     }
                     Rule::variable => {
                         match &inners[..] {
-                           [variable, _assign, expression] => {
-                               let v = il_variable_from(variable)?;
-                               let e = il_expression_from(expression)?;
-                               Ok(il::Statement::assignment(il::AssignmentStatement::new(v, e)))
-                           },
+                            [variable, _assign, expression] => {
+                                let v = il_variable_from(variable)?;
+                                let e = il_expression_from(expression)?;
+                                Ok(il::Statement::assignment(il::AssignmentStatement::new(v, e)))
+                            }
                             _ => todo!()
                         }
-                    },
+                    }
                     Rule::WHILE => {
                         match &inners[..] {
                             [_while, expr, _do, stmt] => {
@@ -258,7 +257,7 @@ fn il_statement_from(pair: &Pair<Rule>) -> Result<il::Statement, ConversionError
                             }
                             _ => todo!("Unexpected number of pairs in WHILE rule: {:?}", inners),
                         }
-                    },
+                    }
                     _ => todo!("il_statement_from inner: {:?}", first_inner.as_rule()),
                 },
             }
@@ -340,15 +339,43 @@ fn il_expression_from(pair: &Pair<Rule>) -> Result<il::Expression, ConversionErr
     match &pair.as_rule() {
         Rule::expression => {
             let inners: Vec<Pair<Rule>> = pair.clone().into_inner().into_iter().collect();
-            match inners.len() {
-                0 => Err(ConversionError::ConversionError(
+            match &inners[..] {
+                [] => Err(ConversionError::ConversionError(
                     "Unexpected empty expression".to_string(),
                 )),
-                1 => {
-                    let se = il_simple_expression_from(&inners[0])?;
+                [se_pair] => {
+                    let se = il_simple_expression_from(se_pair)?;
                     Ok(il::Expression::simple(se))
                 }
+                [lhs_pair, rel_pair, rhs_pair] => {
+                    let lhs = il_simple_expression_from(lhs_pair)?;
+                    let rel = il_relop_from(rel_pair)?;
+                    let rhs = il_simple_expression_from(rhs_pair)?;
+                    Ok(il::Expression::relation (lhs, rel, rhs))
+                }
                 _ => todo!("il_expression_from: {:?}", inners),
+            }
+        }
+        _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
+    }
+}
+
+fn il_relop_from(pair: &Pair<Rule>) -> Result<il::RelOp, ConversionError> {
+    match &pair.as_rule() {
+        Rule::RELOP => {
+            match pair.as_str() {
+                "=" => Ok(il::RelOp::Equal),
+                "<>" => Ok(il::RelOp::NotEqual),
+                "<" => Ok(il::RelOp::LessThan),
+                "<=" => Ok(il::RelOp::LessThanOrEqual),
+                ">" => Ok(il::RelOp::GreaterThan),
+                ">=" => Ok(il::RelOp::GreaterThanOrEqual),
+                _ => {
+                    Err(ConversionError::ConversionError(format!(
+                        "Unexpected relop: {}",
+                        pair.as_str()
+                    )))
+                }
             }
         }
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
