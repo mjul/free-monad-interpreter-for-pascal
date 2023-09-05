@@ -96,6 +96,8 @@ PLUS = {"+"}
 MINUS = {"-"}
 DOTDOT = {".."}
 APOSTROPHE = {"'"}
+STAR = {"*"}
+SLASH = {"/"}
 
 // String literals are enclosed in single quotes, and can contain escaped single quotes
 STRING_LITERAL = @{
@@ -113,7 +115,7 @@ ADDOP = { PLUS | MINUS } // TODO: "OR" is not yet supported
 // leaving the dangling `=` signs of the `<=` and `>=` tokens unmatched.
 RELOP = {"=" | "<=" | ">=" | "<>" | "<" | ">" } // TODO: IN is not yet supported
 
-MULOP = {"*" | "/" | DIV | MOD | AND }
+MULOP = { STAR | SLASH | DIV | MOD | AND }
 // Match digits atomically, no whitespace allowed
 NUM_INT = @{ ASCII_DIGIT+ }
 
