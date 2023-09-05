@@ -113,7 +113,15 @@ ADDOP = { PLUS | MINUS } // TODO: "OR" is not yet supported
 // since the `<` and `>` tokens are prefixes of the `<=` and `>=` tokens,
 // so if the shorter tokens are matched first, they will be matched instead of the longer tokens,
 // leaving the dangling `=` signs of the `<=` and `>=` tokens unmatched.
-RELOP = {"=" | "<=" | ">=" | "<>" | "<" | ">" } // TODO: IN is not yet supported
+
+EQUAL = {"="}
+NOT_EQUAL = {"<>"}
+LT = {"<"}
+LE = {"<="}
+GE = {">="}
+GT = {">"}
+
+RELOP = { EQUAL| LE | GE | NOT_EQUAL | LT | GT } // TODO: IN is not yet supported
 
 MULOP = { STAR | SLASH | DIV | MOD | AND }
 // Match digits atomically, no whitespace allowed

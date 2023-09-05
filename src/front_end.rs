@@ -381,18 +381,21 @@ fn il_expression_from(pair: &Pair<Rule>) -> Result<il::Expression, ConversionErr
 
 fn il_relop_from(pair: &Pair<Rule>) -> Result<il::RelOp, ConversionError> {
     match &pair.as_rule() {
-        Rule::RELOP => match pair.as_str() {
-            "=" => Ok(il::RelOp::Equal),
-            "<>" => Ok(il::RelOp::NotEqual),
-            "<" => Ok(il::RelOp::LessThan),
-            "<=" => Ok(il::RelOp::LessThanOrEqual),
-            ">" => Ok(il::RelOp::GreaterThan),
-            ">=" => Ok(il::RelOp::GreaterThanOrEqual),
-            _ => Err(ConversionError::ConversionError(format!(
-                "Unexpected relop: {}",
-                pair.as_str()
-            ))),
-        },
+        Rule::RELOP => {
+            let inner_rules: Vec<Rule> = pair.clone().into_inner().into_iter().map(|p| p.as_rule()).collect();
+            match &inner_rules[..] {
+                [Rule::EQUAL] => Ok(il::RelOp::Equal),
+                [Rule::NOT_EQUAL] => Ok(il::RelOp::NotEqual),
+                [Rule::LT] => Ok(il::RelOp::LessThan),
+                [Rule::LE] => Ok(il::RelOp::LessThanOrEqual),
+                [Rule::GT] => Ok(il::RelOp::GreaterThan),
+                [Rule::GE] => Ok(il::RelOp::GreaterThanOrEqual),
+                _ => Err(ConversionError::ConversionError(format!(
+                    "Unexpected relop: {}",
+                    pair.as_str()
+                ))),
+            }
+        }
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
 }
@@ -469,7 +472,6 @@ fn il_mulop_from(pair: &Pair<Rule>) -> Result<il::MulOp, ConversionError> {
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
 }
-
 
 fn il_factor_from(pair: &Pair<Rule>) -> Result<il::Factor, ConversionError> {
     match &pair.as_rule() {
@@ -567,9 +569,8 @@ fn parse_program_string(input: &str) -> Result<il::ProgramExpr, FrontEndError> {
 
 #[cfg(test)]
 mod tests {
-    use paste::paste;
     use pest::iterators::Pairs;
-
+    use paste::paste;
     use crate::il::{DeclarationsExpr, VarDeclaration};
 
     use super::*;
@@ -594,7 +595,7 @@ mod tests {
 
     macro_rules! test_can_all {
         ($name:ident, $rule:ident, $input:expr) => {
-            paste! {
+            paste!{
                 #[test]
                 fn [<pascal_parser_can_parse_ $name _without_err>]() {
                     let result_pairs = PascalParser::parse(Rule::$rule, $input);
