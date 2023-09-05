@@ -87,7 +87,6 @@ WORD_SYMBOL = @{
 // We use the ! combinator to make sure that the IDENT is not a keyword
 IDENT = @{!WORD_SYMBOL ~ ASCII_ALPHA ~ IDENT_REST* }
 
-
 LPAREN = {"("}
 RPAREN = {")"}
 LBRACK = {"["}
@@ -106,7 +105,7 @@ STRING_LITERAL = @{
     ~ APOSTROPHE)
 }
 
-ADDOP = {"+" | "-" } // TODO: "OR" is not yet supported
+ADDOP = { PLUS | MINUS } // TODO: "OR" is not yet supported
 
 // Notice how we have to write this in the order of the longest tokens first
 // since the `<` and `>` tokens are prefixes of the `<=` and `>=` tokens,
@@ -114,7 +113,7 @@ ADDOP = {"+" | "-" } // TODO: "OR" is not yet supported
 // leaving the dangling `=` signs of the `<=` and `>=` tokens unmatched.
 RELOP = {"=" | "<=" | ">=" | "<>" | "<" | ">" } // TODO: IN is not yet supported
 
-MULOP = {"*" | "/" } // TODO: "DIV", "MOD" and "AND" are not yet supported
+MULOP = {"*" | "/" | DIV | MOD | AND }
 // Match digits atomically, no whitespace allowed
 NUM_INT = @{ ASCII_DIGIT+ }
 
@@ -187,7 +186,8 @@ statement_list = {
 
 // So far, we have tried to keep the rules close the the grammars mentioned above,
 // but do note that we could use more of the PEG features of Pest to simplify the grammar.
-
+// Note that we do not support the empty statement, which is allowed in Pascal, so
+// trailing semicolons are not allowed.
 statement = {
     (variable ~ ASSIGNOP ~ expression)
     | procedure_statement
@@ -212,14 +212,18 @@ expression_list = {
     | expression ~ (COMMA ~ expression_list)?
 }
 
+// The recursive rule is first to ensure it is greedily matched when present
 expression = {
-    simple_expression ~ (RELOP ~ simple_expression)?
+    simple_expression ~ (RELOP ~ simple_expression)+
+    | simple_expression
 }
 
 // Rewritten to avoid left-recursion
 // This one allows a signed term at the end of the expression, unlike the Tiny Pascal grammar
+// Use the negative lookahead combinator ! to make sure that we we match the short version
+// without ADDOP and tail only if there is no ADDOP.
 simple_expression = {
-    sign? ~ term ~ (ADDOP ~ simple_expression)?
+    sign? ~ term ~ (!ADDOP | (ADDOP ~ simple_expression)?)
 }
 
 term = {

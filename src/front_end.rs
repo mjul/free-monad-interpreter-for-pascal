@@ -474,6 +474,7 @@ mod tests {
     test_can_all!(statement_procedure_statement, statement, "writeLn('Hello, World!')");
     test_can_all!(statement_compound_statement, statement, "begin x:=1;y:=2 end");
     test_can_all!(statement_if_then_else, statement, "if x>10 then x:=10 else x:=x");
+    test_can_all!(statement_if_then_else_composite_cond, statement, "if i mod 3 = 0 then x else y");
     test_can_all!(statement_while, statement, "while x<10 do x:=x+1");
     test_can_all!(statement_while_leq, statement, "while x<=10 do x:=x+1");
 
@@ -491,6 +492,9 @@ mod tests {
     test_can_all!(expression_relop_leq, expression, "x <= 2");
     test_can_all!(expression_relop_gt, expression, "x > 2");
     test_can_all!(expression_relop_gte, expression, "x >= 2");
+    // Composite from non-trivial simple exprs:
+    // LHS: simple_expressino i mod 15, RHS: simple_expression 0
+    test_can_all!(expression_relop_composite, expression, "i mod 15 = 0");
 
     test_can_all!(simple_expression_term, simple_expression, "x");
     test_can_all!(simple_expression_sign_term, simple_expression, "-x");
@@ -500,6 +504,12 @@ mod tests {
     test_can_all!(term_factor, term, "x");
     test_can_all!(term_mulop_single, term, "2*x");
     test_can_all!(term_mulop_multiple, term, "2*x*y");
+    test_can_all!(term_mulop_single_star, term, "2*x");
+    test_can_all!(term_mulop_single_slash, term, "2/x");
+    test_can_all!(term_mulop_single_div, term, "4 DIV 2");
+    test_can_all!(term_mulop_single_mod, term, "4 MOD 2");
+    test_can_all!(term_mulop_single_mod_var_const, term, "i MOD 15");
+    test_can_all!(term_mulop_single_and, term, "x AND y");
 
     test_can_all!(factor_id, factor, "foo");
     test_can_all!(factor_id_list, factor, "foo(x,y,z)");
