@@ -630,4 +630,37 @@ mod tests {
         assert_eq!(expected.id, actual.id);
         //assert_eq!(expected, actual);
     }
+
+    #[test]
+    fn parse_program_string_fizzbuzz_returns_valid_il() {
+        let actual = parse_program_string(
+            r#"
+                    program fizzbuzz(output);
+
+                    var
+                      i: integer;
+
+                    begin
+                      i := 1;
+                      while i <= 100 do
+                        if i mod 15 = 0 then
+                          writeln('FizzBuzz')
+                        else if i mod 3 = 0 then
+                          writeln('Fizz')
+                        else if i mod 5 = 0 then
+                          writeln('Buzz')
+                        else
+                          writeln(i)
+                    end.
+                "#).unwrap();
+
+        // Just a smoke test for now (parsing not failing is already a good sign)
+        assert_eq!(il::Id::new_from_str("fizzbuzz").unwrap(), actual.id);
+        assert_eq!(DeclarationsExpr::new(vec![
+            VarDeclaration::new(
+                il::IdentifierList::new(
+                    il::NonEmptyVec::single(il::Id::new_from_str("i").unwrap())),
+                il::Type::standard(il::StandardType::Integer)),
+        ]), actual.declarations);
+    }
 }
