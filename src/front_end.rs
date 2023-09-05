@@ -238,26 +238,35 @@ fn il_statement_from(pair: &Pair<Rule>) -> Result<il::Statement, ConversionError
                         let ps = il_procedure_statement_from(first_inner)?;
                         Ok(il::Statement::procedure(ps))
                     }
-                    Rule::variable => {
-                        match &inners[..] {
-                            [variable, _assign, expression] => {
-                                let v = il_variable_from(variable)?;
-                                let e = il_expression_from(expression)?;
-                                Ok(il::Statement::assignment(il::AssignmentStatement::new(v, e)))
-                            }
-                            _ => todo!()
+                    Rule::variable => match &inners[..] {
+                        [variable, _assign, expression] => {
+                            let v = il_variable_from(variable)?;
+                            let e = il_expression_from(expression)?;
+                            Ok(il::Statement::assignment(il::AssignmentStatement::new(
+                                v, e,
+                            )))
                         }
-                    }
-                    Rule::WHILE => {
-                        match &inners[..] {
-                            [_while, expr, _do, stmt] => {
-                                let e = il_expression_from(expr)?;
-                                let s = il_statement_from(stmt)?;
-                                Ok(il::Statement::while_do(il::WhileDoStatement::new(e, s)))
-                            }
-                            _ => todo!("Unexpected number of pairs in WHILE rule: {:?}", inners),
+                        _ => todo!(),
+                    },
+                    Rule::WHILE => match &inners[..] {
+                        [_while, expr, _do, stmt] => {
+                            let e = il_expression_from(expr)?;
+                            let s = il_statement_from(stmt)?;
+                            Ok(il::Statement::while_do(il::WhileDoStatement::new(e, s)))
                         }
-                    }
+                        _ => todo!("Unexpected number of pairs in WHILE rule: {:?}", inners),
+                    },
+                    Rule::IF => match &inners[..] {
+                        [_if, expr, _then, thn, _else, els] => {
+                            let cond_expr = il_expression_from(expr)?;
+                            let then_stmt = il_statement_from(thn)?;
+                            let else_stmt = il_statement_from(els)?;
+                            Ok(il::Statement::if_then_else(il::IfThenElseStatement::new(
+                                cond_expr, then_stmt, else_stmt,
+                            )))
+                        }
+                        _ => todo!("Unexpected number of pairs in IF rule: {:?}", inners),
+                    },
                     _ => todo!("il_statement_from inner: {:?}", first_inner.as_rule()),
                 },
             }
@@ -265,7 +274,6 @@ fn il_statement_from(pair: &Pair<Rule>) -> Result<il::Statement, ConversionError
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
 }
-
 
 fn il_variable_from(pair: &Pair<Rule>) -> Result<il::Variable, ConversionError> {
     match &pair.as_rule() {
@@ -351,7 +359,7 @@ fn il_expression_from(pair: &Pair<Rule>) -> Result<il::Expression, ConversionErr
                     let lhs = il_simple_expression_from(lhs_pair)?;
                     let rel = il_relop_from(rel_pair)?;
                     let rhs = il_simple_expression_from(rhs_pair)?;
-                    Ok(il::Expression::relation (lhs, rel, rhs))
+                    Ok(il::Expression::relation(lhs, rel, rhs))
                 }
                 _ => todo!("il_expression_from: {:?}", inners),
             }
