@@ -93,9 +93,9 @@ pub(crate) fn fizzbuzz() -> ProgramExpr {
         Expression::relation(
             SimpleExpression::term(
                 Term::mul_op(
-                    Term::factor(Factor::id(Id::new_from_str(id).unwrap())),
+                    Factor::id(Id::new_from_str(id).unwrap()),
                     MulOp::Mod,
-                    Factor::number(divisor))),
+                    Term::factor(Factor::number(divisor)))),
             RelOp::Equal,
             SimpleExpression::term(Term::factor(Factor::number(remainder))));
 

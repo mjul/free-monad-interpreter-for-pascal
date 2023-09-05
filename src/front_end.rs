@@ -432,13 +432,19 @@ fn il_term_from(pair: &Pair<Rule>) -> Result<il::Term, ConversionError> {
     match &pair.as_rule() {
         Rule::term => {
             let inners: Vec<Pair<Rule>> = pair.clone().into_inner().into_iter().collect();
-            match inners.len() {
-                0 => Err(ConversionError::ConversionError(
+            match &inners[..] {
+                [] => Err(ConversionError::ConversionError(
                     "Unexpected empty term".to_string(),
                 )),
-                1 => {
-                    let f = il_factor_from(&inners[0])?;
+                [factor] => {
+                    let f = il_factor_from(factor)?;
                     Ok(il::Term::factor(f))
+                }
+                [factor, mulop, term] => {
+                    let f = il_factor_from(factor)?;
+                    let m = il_mulop_from(mulop)?;
+                    let t = il_term_from(term)?;
+                    Ok(il::Term::mul_op(f, m, t))
                 }
                 _ => todo!("il_term_from: {:?}", inners),
             }
@@ -446,6 +452,24 @@ fn il_term_from(pair: &Pair<Rule>) -> Result<il::Term, ConversionError> {
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
 }
+
+fn il_mulop_from(pair: &Pair<Rule>) -> Result<il::MulOp, ConversionError> {
+    match &pair.as_rule() {
+        Rule::MULOP => match pair.clone().into_inner().next().map(|p| p.as_rule()) {
+            Some(Rule::STAR) => Ok(il::MulOp::Star),
+            Some(Rule::SLASH) => Ok(il::MulOp::Slash),
+            Some(Rule::DIV) => Ok(il::MulOp::Div),
+            Some(Rule::MOD) => Ok(il::MulOp::Mod),
+            Some(Rule::AND) => Ok(il::MulOp::And),
+            _ => Err(ConversionError::ConversionError(format!(
+                "Unexpected mulop: {}",
+                pair.as_str()
+            ))),
+        },
+        _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
+    }
+}
+
 
 fn il_factor_from(pair: &Pair<Rule>) -> Result<il::Factor, ConversionError> {
     match &pair.as_rule() {
@@ -498,21 +522,21 @@ fn il_program_from(pair: Pair<Rule>) -> Result<il::ProgramExpr, ConversionError>
             let inners: Vec<Pair<Rule>> = pair.into_inner().into_iter().collect();
             match &inners[..] {
                 [_program, id, _lparen, identifier_list, _rparen, _semicolon, declarations, subprogram_declarations, compound_statement, ..] =>
-                {
-                    let id = il_id_from(&id)?;
-                    let identifier_list = il_identifier_list_from(identifier_list)?;
-                    let declarations = il_declarations_from(declarations)?;
-                    let subprogram_declarations =
-                        il_subprogram_declarations_from(subprogram_declarations)?;
-                    let compound_statement = il_compound_statement_from(compound_statement)?;
-                    Ok(il::ProgramExpr::new(
-                        id,
-                        identifier_list,
-                        declarations,
-                        subprogram_declarations,
-                        compound_statement,
-                    ))
-                }
+                    {
+                        let id = il_id_from(&id)?;
+                        let identifier_list = il_identifier_list_from(identifier_list)?;
+                        let declarations = il_declarations_from(declarations)?;
+                        let subprogram_declarations =
+                            il_subprogram_declarations_from(subprogram_declarations)?;
+                        let compound_statement = il_compound_statement_from(compound_statement)?;
+                        Ok(il::ProgramExpr::new(
+                            id,
+                            identifier_list,
+                            declarations,
+                            subprogram_declarations,
+                            compound_statement,
+                        ))
+                    }
                 _ => Err(ConversionError::ConversionError(
                     "Unexpected number of pairs under program rule".to_string(),
                 )),

@@ -302,14 +302,14 @@ impl SimpleExpression {
 #[derive(Debug, Clone)]
 pub(crate) enum Term {
     Factor(Factor),
-    MulOp(Box<Term>, MulOp, Box<Factor>),
+    MulOp(Box<Factor>, MulOp, Box<Term>),
 }
 
 impl Term {
     pub(crate) fn factor(factor: Factor) -> Self {
         Self::Factor(factor)
     }
-    pub(crate) fn mul_op(rhs: Term, mul_op: MulOp, lhs: Factor) -> Self {
+    pub(crate) fn mul_op(rhs: Factor, mul_op: MulOp, lhs: Term) -> Self {
         Self::MulOp(Box::new(rhs), mul_op, Box::new(lhs))
     }
 }

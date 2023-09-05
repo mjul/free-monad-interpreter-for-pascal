@@ -559,7 +559,7 @@ where
 {
     match t {
         Term::Factor(f) => print_program_from_factor(f, k),
-        Term::MulOp(lhs, op, rhs) => print_program_from_term(
+        Term::MulOp(lhs, op, rhs) => print_program_from_factor(
             lhs.deref(),
             PrintProgram::write(
                 format!(
@@ -572,7 +572,7 @@ where
                         MulOp::And => "and",
                     }
                 ),
-                print_program_from_factor(rhs.deref(), k),
+                print_program_from_term(rhs.deref(), k),
             ),
         ),
     }
@@ -665,6 +665,5 @@ end."#
         assert!(actual.contains("if i mod 15 = 0 then"));
         assert!(actual.contains("if i mod 5 = 0 then"));
         assert!(actual.contains("if i mod 3 = 0 then"));
-        assert_eq!("foo", actual);
     }
 }
