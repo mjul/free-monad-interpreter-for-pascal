@@ -569,8 +569,9 @@ fn parse_program_string(input: &str) -> Result<il::ProgramExpr, FrontEndError> {
 
 #[cfg(test)]
 mod tests {
-    use pest::iterators::Pairs;
     use paste::paste;
+    use pest::iterators::Pairs;
+
     use crate::il::{DeclarationsExpr, VarDeclaration};
 
     use super::*;
@@ -594,10 +595,10 @@ mod tests {
     }
 
     macro_rules! test_can_all {
-        ($name:ident, $rule:ident, $input:expr) => {
+        ($rule:ident, $case:ident, $input:expr) => {
             paste!{
                 #[test]
-                fn [<pascal_parser_can_parse_ $name _without_err>]() {
+                fn [<pascal_parser_can_parse_ $rule _ $case _without_err>]() {
                     let result_pairs = PascalParser::parse(Rule::$rule, $input);
                     dbg!(&result_pairs);
                     assert!(result_pairs.is_ok());
@@ -607,113 +608,116 @@ mod tests {
         };
     }
 
-    test_can_all!(ident_mixed_case, IDENT, "helloWorld");
+    test_can_all!(IDENT,mixed_case, "helloWorld");
 
-    test_can_all!(string_literal_empty, STRING_LITERAL, "''");
-    test_can_all!(string_literal_simple, STRING_LITERAL, "'abc'");
-    test_can_all!(string_literal_with_quoted_quote, STRING_LITERAL, "'foo''bar'");
+    test_can_all!(STRING_LITERAL, empty, "''");
+    test_can_all!(STRING_LITERAL, simple, "'abc'");
+    test_can_all!(STRING_LITERAL, with_quoted_quote, "'foo''bar'");
 
-    test_can_all!(keyword_program, PROGRAM, "program");
-    test_can_all!(keyword_program_mixed_case, PROGRAM, "pRoGrAm");
+    test_can_all!(PROGRAM, lower_case, "program");
+    test_can_all!(PROGRAM, mixed_case, "pRoGrAm");
 
-    test_can_all!(identifier_list_single_id, identifier_list, "output");
-    test_can_all!(identifier_list_multiple_ids, identifier_list, "a,b,c");
+    test_can_all!(identifier_list, single_id, "output");
+    test_can_all!(identifier_list, multiple_ids, "a,b,c");
 
-    test_can_all!(declarations_empty, declarations, "");
-    test_can_all!(declarations_single_decl_single_var, declarations, "var a : integer;");
-    test_can_all!(declarations_single_dec_multiple_vars, declarations, "var i, j : integer;");
-    test_can_all!(declarations_multiple_decls, declarations, "var a : integer; var b: integer;");
+    test_can_all!(declarations, empty, "");
+    test_can_all!(declarations, single_decl_single_var, "var a : integer;");
+    test_can_all!(declarations, single_dec_multiple_vars, "var i, j : integer;");
+    test_can_all!(declarations, multiple_decls, "var a : integer; var b: integer;");
 
-    test_can_all!(subprogram_declarations_empty, subprogram_declarations, "");
-    test_can_all!(subprogram_declarations_single_function, subprogram_declarations, "function foo: integer; begin end;");
+    test_can_all!(subprogram_declarations, empty, "");
+    test_can_all!(subprogram_declarations, single_function, "function foo: integer; begin end;");
 
-    test_can_all!(subprogram_head_function_no_args, subprogram_head, "function foo: integer;");
-    test_can_all!(subprogram_head_function_with_args, subprogram_head, "function foo(x:integer): integer;");
-    test_can_all!(subprogram_head_procedure_no_args, subprogram_head, "procedure foo;");
-    test_can_all!(subprogram_head_procedure_with_args, subprogram_head, "procedure foo(x:integer);");
+    test_can_all!(subprogram_head, function_no_args, "function foo: integer;");
+    test_can_all!(subprogram_head, function_with_args, "function foo(x:integer): integer;");
+    test_can_all!(subprogram_head, procedure_no_args, "procedure foo;");
+    test_can_all!(subprogram_head, procedure_with_args, "procedure foo(x:integer);");
 
-    test_can_all!(arguments_empty, arguments, "");
-    test_can_all!(arguments_single, arguments, "(x:integer)");
-    test_can_all!(arguments_multiple, arguments, "(x:integer; y : integer)");
+    test_can_all!(arguments,_empty, "");
+    test_can_all!(arguments, single, "(x:integer)");
+    test_can_all!(arguments, multiple, "(x:integer; y : integer)");
 
-    test_can_all!(parameter_list_single, parameter_list, "x:integer");
-    test_can_all!(parameter_list_multiple_2, parameter_list, "x:integer; y : integer");
-    test_can_all!(parameter_list_multiple_3, parameter_list, "x:integer; y : integer; z : integer");
+    test_can_all!(parameter_list, single, "x:integer");
+    test_can_all!(parameter_list, multiple_2, "x:integer; y : integer");
+    test_can_all!(parameter_list, multiple_3, "x:integer; y : integer; z : integer");
 
-    test_can_all!(begin, BEGIN, "begin");
-    test_can_all!(end, END, "end");
+    test_can_all!(BEGIN, lower_case, "begin");
+    test_can_all!(END, lower_case, "end");
 
-    test_can_all!(optional_statements_empty, optional_statements, "");
-    test_can_all!(optional_statements_single_statement, optional_statements, "x := 1");
-    test_can_all!(optional_statements_multiple_statements, optional_statements, "x:=1; y:=2");
+    test_can_all!(optional_statements, empty, "");
+    test_can_all!(optional_statements, single_statement,  "x := 1");
+    test_can_all!(optional_statements, multiple_statements, "x:=1; y:=2");
 
-    test_can_all!(compound_statement_empty, compound_statement, "begin end");
-    test_can_all!(compound_statement_single_assignment, compound_statement, "begin x:=1 end");
-    test_can_all!(compound_statement_single_writeln, compound_statement, "begin writeLn('Hello, World!') end");
-    test_can_all!(compound_statement_multiple, compound_statement, "begin x:=1; if x>10 then x:=10 else x:=x end");
+    test_can_all!(compound_statement, empty, "begin end");
+    test_can_all!(compound_statement, single_assignment, "begin x:=1 end");
+    test_can_all!(compound_statement, single_writeln, "begin writeLn('Hello, World!') end");
+    test_can_all!(compound_statement, multiple, "begin x:=1; if x>10 then x:=10 else x:=x end");
 
-    test_can_all!(statement_assignment, statement, "x:=1");
-    test_can_all!(statement_procedure_statement, statement, "writeLn('Hello, World!')");
-    test_can_all!(statement_compound_statement, statement, "begin x:=1;y:=2 end");
-    test_can_all!(statement_if_then_else, statement, "if x>10 then x:=10 else x:=x");
-    test_can_all!(statement_if_then_else_composite_cond, statement, "if i mod 3 = 0 then x else y");
-    test_can_all!(statement_while, statement, "while x<10 do x:=x+1");
-    test_can_all!(statement_while_leq, statement, "while x<=10 do x:=x+1");
+    test_can_all!(statement, assignment, "x:=1");
+    test_can_all!(statement, procedure_statement, "writeLn('Hello, World!')");
+    test_can_all!(statement, compound_statement, "begin x:=1;y:=2 end");
+    test_can_all!(statement, if_then_else, "if x>10 then x:=10 else x:=x");
+    test_can_all!(statement, if_then_else_composite_cond, "if i mod 3 = 0 then x else y");
+    test_can_all!(statement, while_less_than, "while x<10 do x:=x+1");
+    test_can_all!(statement, while_leq, "while x<=10 do x:=x+1");
 
-    test_can_all!(variable_simple, variable, "x");
-    test_can_all!(variable_array, variable, "x[1]");
+    test_can_all!(variable, simple, "x");
+    test_can_all!(variable, array, "x[1]");
 
-    test_can_all!(expression_list_single, expression_list, "1");
-    test_can_all!(expression_list_multiple_2, expression_list, "1,2");
-    test_can_all!(expression_list_multiple_3, expression_list, "1,2,1+2");
+    test_can_all!(expression_list, single, "1");
+    test_can_all!(expression_list, multiple_2, "1,2");
+    test_can_all!(expression_list, multiple_3, "1,2,1+2");
 
-    test_can_all!(expression_simple, expression, "(+1)");
-    test_can_all!(expression_relop_eq, expression, "x = 2");
-    test_can_all!(expression_relop_neq, expression, "x <> 2");
-    test_can_all!(expression_relop_le, expression, "x < 2");
-    test_can_all!(expression_relop_leq, expression, "x <= 2");
-    test_can_all!(expression_relop_gt, expression, "x > 2");
-    test_can_all!(expression_relop_gte, expression, "x >= 2");
+    test_can_all!(expression, simple, "(+1)");
+    test_can_all!(expression, relop_eq, "x = 2");
+    test_can_all!(expression, relop_neq, "x <> 2");
+    test_can_all!(expression, relop_le, "x < 2");
+    test_can_all!(expression, relop_leq, "x <= 2");
+    test_can_all!(expression, relop_gt, "x > 2");
+    test_can_all!(expression, relop_gte, "x >= 2");
     // Composite from non-trivial simple exprs:
     // LHS: simple_expressino i mod 15, RHS: simple_expression 0
-    test_can_all!(expression_relop_composite, expression, "i mod 15 = 0");
+    test_can_all!(expression, relop_composite, "i mod 15 = 0");
 
-    test_can_all!(simple_expression_term, simple_expression, "x");
-    test_can_all!(simple_expression_sign_term, simple_expression, "-x");
-    test_can_all!(simple_expression_add_op_1, simple_expression, "x + y");
-    test_can_all!(simple_expression_add_op_2, simple_expression, "-x + y - z");
+    test_can_all!(simple_expression, term, "x");
+    test_can_all!(simple_expression, sign_term, "-x");
+    test_can_all!(simple_expression, add_op_1, "x + y");
+    test_can_all!(simple_expression, add_op_2, "-x + y - z");
 
-    test_can_all!(term_factor, term, "x");
-    test_can_all!(term_mulop_single, term, "2*x");
-    test_can_all!(term_mulop_multiple, term, "2*x*y");
-    test_can_all!(term_mulop_single_star, term, "2*x");
-    test_can_all!(term_mulop_single_slash, term, "2/x");
-    test_can_all!(term_mulop_single_div, term, "4 DIV 2");
-    test_can_all!(term_mulop_single_mod, term, "4 MOD 2");
-    test_can_all!(term_mulop_single_mod_var_const, term, "i MOD 15");
-    test_can_all!(term_mulop_single_and, term, "x AND y");
+    test_can_all!(term, factor, "x");
+    test_can_all!(term, mulop_single, "2*x");
+    test_can_all!(term, mulop_multiple, "2*x*y");
+    test_can_all!(term, mulop_single_star, "2*x");
+    test_can_all!(term, mulop_single_slash, "2/x");
+    test_can_all!(term, mulop_single_div, "4 DIV 2");
+    test_can_all!(term, mulop_single_mod, "4 MOD 2");
+    test_can_all!(term, mulop_single_mod_var_const, "i MOD 15");
+    test_can_all!(term, mulop_single_and, "x AND y");
 
-    test_can_all!(factor_id, factor, "foo");
-    test_can_all!(factor_id_list, factor, "foo(x,y,z)");
-    test_can_all!(factor_const_num, factor, "42");
-    test_can_all!(factor_const_character_string, factor, "'foo'");
-    test_can_all!(factor_parens, factor, "(1)");
-    test_can_all!(factor_not_id, factor, "not x");
-    test_can_all!(factor_not_id_list, factor, "not foo(1,2)");
-    test_can_all!(factor_not_num, factor, "not 1");
-    test_can_all!(factor_not_parens, factor, "not (1+2)");
-    test_can_all!(factor_not_not_parens, factor, "not not (1+2)");
+    test_can_all!(factor, id, "foo");
+    test_can_all!(factor, id_list, "foo(x,y,z)");
+    test_can_all!(factor, const_num, "42");
+    test_can_all!(factor, const_character_string, "'foo'");
+    test_can_all!(factor, parens, "(1)");
+    test_can_all!(factor, not_id, "not x");
+    test_can_all!(factor, not_id_list, "not foo(1,2)");
+    test_can_all!(factor, not_num, "not 1");
+    test_can_all!(factor, not_parens, "not (1+2)");
+    test_can_all!(factor, not_not_parens, "not not (1+2)");
 
-    test_can_all!(program_declarations_and_compound_statement_empty_program, program, "program helloWorld(output); var x:integer; begin end.");
-    test_can_all!(program_subprogram_declarations_and_compound_statement_empty_program, program,
+    test_can_all!(program, declarations_and_compound_statement_empty_program,
+        "program helloWorld(output); var x:integer; begin end."
+    );
+    test_can_all!(program, subprogram_declarations_and_compound_statement_empty_program,
         r#"
         program helloWorld(output);
         function foo: integer; begin end;
         begin end."#
     );
-    test_can_all!(program_compound_statement_empty_program, program, "program helloWorld(output);begin end.");
-    test_can_all!(program_hello_world, program, r#"program helloWorld(output);begin writeLn('Hello, World!') end."#);
-
+    test_can_all!(program, compound_statement_empty_program, "program helloWorld(output);begin end.");
+    test_can_all!(program, hello_world,
+        r#"program helloWorld(output);begin writeLn('Hello, World!') end."#
+    );
 
     #[test]
     fn parse_program_string_hello_world_returns_valid_il() {
