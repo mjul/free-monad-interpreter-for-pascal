@@ -7,6 +7,7 @@
 use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
+use crate::front_end::Rule::statement;
 
 use crate::il;
 use crate::il::{DeclarationsExpr, StandardType, Type};
@@ -115,7 +116,7 @@ fn il_type_from(pair: &Pair<Rule>) -> Result<il::Type, ConversionError> {
                         Rule::standard_type => il_standard_type_from(&p).map(|st| Type::standard(st)),
                         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
                     }
-                },
+                }
                 _ => todo!()
             }
         }
@@ -139,7 +140,7 @@ fn il_standard_type_from(pair: &Pair<Rule>) -> Result<StandardType, ConversionEr
                     "Unexpected number of pairs under standard_type rule".to_string(),
                 )),
             }
-        },
+        }
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
 }
@@ -225,6 +226,7 @@ fn il_statement_list_from(pair: &Pair<Rule>) -> Result<Vec<il::Statement>, Conve
 }
 
 fn il_statement_from(pair: &Pair<Rule>) -> Result<il::Statement, ConversionError> {
+    dbg!(&pair);
     match pair.as_rule() {
         Rule::statement => {
             let inners: Vec<Pair<Rule>> = pair.clone().into_inner().into_iter().collect();
@@ -237,8 +239,38 @@ fn il_statement_from(pair: &Pair<Rule>) -> Result<il::Statement, ConversionError
                         let ps = il_procedure_statement_from(first_inner)?;
                         Ok(il::Statement::procedure(ps))
                     }
+                    Rule::variable => {
+                        match &inners[..] {
+                           [variable, _assign, expression] => {
+                               let v = il_variable_from(variable)?;
+                               let e = il_expression_from(expression)?;
+                               Ok(il::Statement::assignment(il::AssignmentStatement::new(v, e)))
+                           },
+                            _ => todo!()
+                        }
+                    },
                     _ => todo!("il_statement_from inner: {:?}", first_inner.as_rule()),
                 },
+            }
+        }
+        _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
+    }
+}
+
+
+fn il_variable_from(pair: &Pair<Rule>) -> Result<il::Variable, ConversionError> {
+    match &pair.as_rule() {
+        Rule::variable => {
+            let inners: Vec<Pair<Rule>> = pair.clone().into_inner().into_iter().collect();
+            match inners.len() {
+                0 => Err(ConversionError::ConversionError(
+                    "Unexpected empty variable".to_string(),
+                )),
+                1 => {
+                    let id = il_id_from(&inners[0])?;
+                    Ok(il::Variable::id(id))
+                }
+                _ => todo!("il_variable_from: {:?}", inners),
             }
         }
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
