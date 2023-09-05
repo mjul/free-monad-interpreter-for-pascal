@@ -4,6 +4,7 @@
 //! It uses the Pest parser generator to parse the Pascal files,
 //! see <https://pest.rs/>
 
+use std::fmt::{Display, Formatter};
 use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
@@ -16,16 +17,45 @@ use crate::il::{DeclarationsExpr, StandardType, Type};
 pub struct PascalParser;
 
 #[derive(Debug)]
-enum FrontEndError {
+pub(crate) enum FrontEndError {
     ParseError(pest::error::Error<Rule>),
     ConversionError(ConversionError),
 }
 
+impl Display for FrontEndError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FrontEndError::ParseError(e) => write!(f, "Parse error: {}", e),
+            FrontEndError::ConversionError(e) => write!(f, "Conversion error: {}", e),
+        }
+    }
+}
+
+impl std::error::Error for FrontEndError {
+}
+
 #[derive(Debug)]
-enum ConversionError {
+pub(crate) enum ConversionError {
     ParseResultNotSingular,
     UnexpectedRuleInPair(Rule),
     ConversionError(String),
+}
+impl Display for ConversionError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ConversionError::ParseResultNotSingular => {
+                write!(f, "Expected a single parse result")
+            }
+            ConversionError::UnexpectedRuleInPair(rule) => {
+                write!(f, "Unexpected rule in pair: {:?}", rule)
+            }
+            ConversionError::ConversionError(msg) => write!(f, "{}", msg),
+        }
+    }
+}
+
+impl std::error::Error for ConversionError {
+
 }
 
 fn il_id_from(pair: &Pair<Rule>) -> Result<il::Id, ConversionError> {
@@ -553,7 +583,9 @@ fn il_program_from(pair: Pair<Rule>) -> Result<il::ProgramExpr, ConversionError>
     }
 }
 
-fn parse_program_string(input: &str) -> Result<il::ProgramExpr, FrontEndError> {
+/// Parse a Pascal program from its source code as a string.
+/// This is the main entry point for the front-end.
+pub(crate) fn parse_program_string(input: &str) -> Result<il::ProgramExpr, FrontEndError> {
     let result_pairs =
         PascalParser::parse(Rule::program, input).map_err(|e| FrontEndError::ParseError(e))?;
     match result_pairs.len() {
