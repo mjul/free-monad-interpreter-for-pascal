@@ -67,37 +67,52 @@ fn il_declarations_from(pair: &Pair<Rule>) -> Result<il::DeclarationsExpr, Conve
         Rule::declarations => {
             // Chunking in 5 because a single declaration is:
             // var, identifier_list, colon, type, semicolon
-            let vds =
-                pair
-                    .clone()
-                    .into_inner()
-                    .into_iter()
-                    .collect::<Vec<Pair<Rule>>>()
-                    .chunks(5)
-                    .filter_map(|chunk| {
-                        match &chunk[..] {
-                            [] => None,
-                            [var, il, colon, tp, semicolon] => {
-                                match (&var.as_rule(), &il.as_rule(), &colon.as_rule(), &tp.as_rule(), &semicolon.as_rule()) {
-                                    (Rule::VAR, Rule::identifier_list, Rule::COLON, Rule::r#type, Rule::SEMICOLON) => {
-                                        let ids = il_identifier_list_from(il).map_err(|e| Some(e));
-                                        let ty = il_type_from(tp).map_err(|e| Some(e));
-                                        match (ids, ty) {
-                                            (Ok(ids), Ok(ty)) => {
-                                                let vd = il::VarDeclaration::new(ids, ty);
-                                                Some(Ok(vd))
-                                            }
-                                            (Err(e), _) => Some(Err(e.unwrap())),
-                                            (_, Err(e)) => Some(Err(e.unwrap())),
-                                        }
+            let vds = pair
+                .clone()
+                .into_inner()
+                .into_iter()
+                .collect::<Vec<Pair<Rule>>>()
+                .chunks(5)
+                .filter_map(|chunk| match &chunk[..] {
+                    [] => None,
+                    [var, il, colon, tp, semicolon] => {
+                        match (
+                            &var.as_rule(),
+                            &il.as_rule(),
+                            &colon.as_rule(),
+                            &tp.as_rule(),
+                            &semicolon.as_rule(),
+                        ) {
+                            (
+                                Rule::VAR,
+                                Rule::identifier_list,
+                                Rule::COLON,
+                                Rule::r#type,
+                                Rule::SEMICOLON,
+                            ) => {
+                                let ids = il_identifier_list_from(il).map_err(|e| Some(e));
+                                let ty = il_type_from(tp).map_err(|e| Some(e));
+                                match (ids, ty) {
+                                    (Ok(ids), Ok(ty)) => {
+                                        let vd = il::VarDeclaration::new(ids, ty);
+                                        Some(Ok(vd))
                                     }
-                                    _ => Some(Err(ConversionError::ConversionError(format!("Unexpected rule in chunk for var declaration {:?}", chunk))))
+                                    (Err(e), _) => Some(Err(e.unwrap())),
+                                    (_, Err(e)) => Some(Err(e.unwrap())),
                                 }
                             }
-                            _ => Some(Err(ConversionError::ConversionError(format!("Unexpected number of pairs in chunk for var declaration {:?}", chunk)))),
+                            _ => Some(Err(ConversionError::ConversionError(format!(
+                                "Unexpected rule in chunk for var declaration {:?}",
+                                chunk
+                            )))),
                         }
-                    })
-                    .collect::<Result<Vec<il::VarDeclaration>, ConversionError>>()?;
+                    }
+                    _ => Some(Err(ConversionError::ConversionError(format!(
+                        "Unexpected number of pairs in chunk for var declaration {:?}",
+                        chunk
+                    )))),
+                })
+                .collect::<Result<Vec<il::VarDeclaration>, ConversionError>>()?;
             Ok(DeclarationsExpr::new(vds))
         }
 
@@ -110,13 +125,11 @@ fn il_type_from(pair: &Pair<Rule>) -> Result<il::Type, ConversionError> {
         Rule::r#type => {
             let inners = pair.clone().into_inner().collect::<Vec<Pair<Rule>>>();
             match &inners[..] {
-                [p] => {
-                    match p.as_rule() {
-                        Rule::standard_type => il_standard_type_from(&p).map(|st| Type::standard(st)),
-                        _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
-                    }
-                }
-                _ => todo!()
+                [p] => match p.as_rule() {
+                    Rule::standard_type => il_standard_type_from(&p).map(|st| Type::standard(st)),
+                    _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
+                },
+                _ => todo!(),
             }
         }
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
@@ -128,13 +141,11 @@ fn il_standard_type_from(pair: &Pair<Rule>) -> Result<StandardType, ConversionEr
         Rule::standard_type => {
             let inners: Vec<Pair<Rule>> = pair.clone().into_inner().into_iter().collect();
             match &inners[..] {
-                [p] => {
-                    match p.as_rule() {
-                        Rule::INTEGER => Ok(StandardType::Integer),
-                        Rule::REAL => Ok(StandardType::Real),
-                        _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
-                    }
-                }
+                [p] => match p.as_rule() {
+                    Rule::INTEGER => Ok(StandardType::Integer),
+                    Rule::REAL => Ok(StandardType::Real),
+                    _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
+                },
                 _ => Err(ConversionError::ConversionError(
                     "Unexpected number of pairs under standard_type rule".to_string(),
                 )),
@@ -370,22 +381,18 @@ fn il_expression_from(pair: &Pair<Rule>) -> Result<il::Expression, ConversionErr
 
 fn il_relop_from(pair: &Pair<Rule>) -> Result<il::RelOp, ConversionError> {
     match &pair.as_rule() {
-        Rule::RELOP => {
-            match pair.as_str() {
-                "=" => Ok(il::RelOp::Equal),
-                "<>" => Ok(il::RelOp::NotEqual),
-                "<" => Ok(il::RelOp::LessThan),
-                "<=" => Ok(il::RelOp::LessThanOrEqual),
-                ">" => Ok(il::RelOp::GreaterThan),
-                ">=" => Ok(il::RelOp::GreaterThanOrEqual),
-                _ => {
-                    Err(ConversionError::ConversionError(format!(
-                        "Unexpected relop: {}",
-                        pair.as_str()
-                    )))
-                }
-            }
-        }
+        Rule::RELOP => match pair.as_str() {
+            "=" => Ok(il::RelOp::Equal),
+            "<>" => Ok(il::RelOp::NotEqual),
+            "<" => Ok(il::RelOp::LessThan),
+            "<=" => Ok(il::RelOp::LessThanOrEqual),
+            ">" => Ok(il::RelOp::GreaterThan),
+            ">=" => Ok(il::RelOp::GreaterThanOrEqual),
+            _ => Err(ConversionError::ConversionError(format!(
+                "Unexpected relop: {}",
+                pair.as_str()
+            ))),
+        },
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
 }
@@ -491,21 +498,21 @@ fn il_program_from(pair: Pair<Rule>) -> Result<il::ProgramExpr, ConversionError>
             let inners: Vec<Pair<Rule>> = pair.into_inner().into_iter().collect();
             match &inners[..] {
                 [_program, id, _lparen, identifier_list, _rparen, _semicolon, declarations, subprogram_declarations, compound_statement, ..] =>
-                    {
-                        let id = il_id_from(&id)?;
-                        let identifier_list = il_identifier_list_from(identifier_list)?;
-                        let declarations = il_declarations_from(declarations)?;
-                        let subprogram_declarations =
-                            il_subprogram_declarations_from(subprogram_declarations)?;
-                        let compound_statement = il_compound_statement_from(compound_statement)?;
-                        Ok(il::ProgramExpr::new(
-                            id,
-                            identifier_list,
-                            declarations,
-                            subprogram_declarations,
-                            compound_statement,
-                        ))
-                    }
+                {
+                    let id = il_id_from(&id)?;
+                    let identifier_list = il_identifier_list_from(identifier_list)?;
+                    let declarations = il_declarations_from(declarations)?;
+                    let subprogram_declarations =
+                        il_subprogram_declarations_from(subprogram_declarations)?;
+                    let compound_statement = il_compound_statement_from(compound_statement)?;
+                    Ok(il::ProgramExpr::new(
+                        id,
+                        identifier_list,
+                        declarations,
+                        subprogram_declarations,
+                        compound_statement,
+                    ))
+                }
                 _ => Err(ConversionError::ConversionError(
                     "Unexpected number of pairs under program rule".to_string(),
                 )),
@@ -563,7 +570,7 @@ mod tests {
 
     macro_rules! test_can_all {
         ($name:ident, $rule:ident, $input:expr) => {
-            paste!{
+            paste! {
                 #[test]
                 fn [<pascal_parser_can_parse_ $name _without_err>]() {
                     let result_pairs = PascalParser::parse(Rule::$rule, $input);
