@@ -3,11 +3,13 @@
 Writing a free monad interpreter for a tiny subset of Pascal, in Rust.
 Let's see where this goes...
 
-This project demonstrates:
+This project demonstrates elements of compiler and interpreter construction in Rust, including:
 
-- using the Pest PEG (programmable expression grammar) parser generator to build a compiler front-end for a small subset
+- using the **Pest** PEG (*programmable expression grammar*) parser generator to build a compiler front-end for a small subset
   of Pascal
-- using the free monad pattern to build an interpreter for a simple language, in this case for pretty-printing
+- using the **free monad** pattern to build an interpreter for a simple language, in this case for pretty-printing Pascal
+  programs
+
 
 # Why Pascal
 
@@ -28,10 +30,15 @@ a Free Monad interpreter that interprets the printing language to a string to ac
 
 The translation from AST to printing language is done by a recursive function that is a good example of the continuation
 passing style (CPS) that is also used in the Free Monad interpreter. Interestingly, CPS allows us to build data
-structures
-such as lists and trees top down even though the data structures must be constructed bottom up.
+structures such as lists and trees top down even though the data structures must be constructed bottom up.
 
 It is defined in [`src/interpreters/pretty_printer.rs`](src/intepreters/pretty_printer.rs).
+
+## Rust is not the Ideal Language for Free Monads
+Lacking the `do` syntax or a `|>` operator in Rust, the composability of the Free Monad is not as nice as in Haskell or F#.
+It could probably be improved with some `and_then` functions to chain the steps and align them vertically albeit 
+a bit more verbosely.
+
 
 # Compiler Front-End
 
@@ -89,7 +96,6 @@ RELOP = {"=" | "<" | ">" | "<=" | ">=" | "<>"}
 Notice the subtle difference: since `<` and `>` are prefixes of `<=` and `>=`,
 but also individual tokens, the parser uses the first match, so in the latter case
 it will match `<` and `>` for both `<`, `<=` and `>`and `>=`. It will not match `<=` and `>=`.
-
 
 It is quirky and not very intuitive, but overall Pest is still quite nice to work with.
 
