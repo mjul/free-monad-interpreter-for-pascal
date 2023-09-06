@@ -146,6 +146,14 @@ identifier_list = { IDENT ~ (COMMA ~ IDENT)* }
 // We use the ? combinator to make a rule optional instead of an or-epsilon production
 // We use the * combinator to make a rule repeatable zero or more times
 // (the Kleene star, see https://en.wikipedia.org/wiki/Kleene_star).
+
+// Note that the Pascal spec is different from this one from Tiny Pascal,
+// The Pascal spec has a `var` block with a number of declarations:
+//
+// 6 .2 .1    variable-declaration-part = [ `var' variable-declaration ` ;' { variable-declaration ` ;' } ] .
+//
+// See the ISO 7185 specification, section 6.2.1 Variable-declaration-part
+
 declarations = {
     (VAR ~ identifier_list ~ COLON ~ type ~ SEMICOLON)*
 }
