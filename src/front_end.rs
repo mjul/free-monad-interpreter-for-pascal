@@ -190,7 +190,7 @@ fn il_subprogram_declarations_from(
     match &pair.as_rule() {
         Rule::subprogram_declarations => match pair.clone().into_inner().next() {
             None => Ok(il::SubprogramDeclarations::empty()),
-            Some(p) => todo!(),
+            Some(_p) => todo!(),
         },
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
@@ -454,7 +454,7 @@ fn il_simple_expression_from(pair: &Pair<Rule>) -> Result<il::SimpleExpression, 
                     let next2 = inners.next().ok_or(ConversionError::ConversionError(
                         "Missing term after sign".to_string(),
                     ))?;
-                    let t = il_term_from(&next2)?;
+                    let _t = il_term_from(&next2)?;
                     todo!("il_simple_expression_from: sign term: {:?}", s);
                 }
                 _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
@@ -562,8 +562,6 @@ fn il_factor_from(pair: &Pair<Rule>) -> Result<il::Factor, ConversionError> {
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
 }
-
-use std::slice::Windows;
 
 /// Convert a Pascal string literal to a Rust string.
 fn string_from_string_literal(pair: &Pair<Rule>) -> Result<String, ConversionError> {

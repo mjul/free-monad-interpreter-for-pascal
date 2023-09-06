@@ -13,7 +13,7 @@
 //! Interestingly, CPS allows us to build data structures such as lists and trees top down even
 //! though the data structures must be constructed bottom up.
 
-use std::fmt::{Debug, Formatter, Pointer};
+use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
 
 use crate::il::{
@@ -46,10 +46,10 @@ fn interpret_print_program(
     ctx: PrettyPrintContext,
 ) -> PrettyPrintContext {
     match pp {
-        /// The `Pure` constructor in Free Monad terminology.
+        // The `Pure` constructor in Free Monad terminology.
         // TODO: we should probably use the inside ctx not the function-arg ctx?
         PrintProgram::Stop(_) => ctx,
-        /// The `Free` constructor in Free Monad terminology
+        // The `Free` constructor in Free Monad terminology
         PrintProgram::KeepGoing(pi) => match pi {
             PrintInstruction::Write(s, k) => {
                 let next_ctx = ctx.write(s);
@@ -155,9 +155,7 @@ impl<TNext> Debug for PrintInstruction<TNext> {
 
 // TODO: consider using the Result type to get a lot of functions for free
 enum PrintProgram<T> {
-    /// The `Pure` constructor in Free Monad terminology.
     Stop(T),
-    /// The `Free` constructor in Free Monad terminology
     KeepGoing(PrintInstruction<PrintProgram<T>>),
 }
 
@@ -255,10 +253,10 @@ where
 {
     match pascal {
         PascalExpr::Program(p) => print_program_from_program(p),
-        PascalExpr::IdentifierList(il) => todo!(),
-        PascalExpr::Declarations(ds) => todo!(),
-        PascalExpr::SubprogramDeclarations(sd) => todo!(),
-        PascalExpr::CompoundStatement(cs) => todo!(),
+        PascalExpr::IdentifierList(_il) => todo!(),
+        PascalExpr::Declarations(_ds) => todo!(),
+        PascalExpr::SubprogramDeclarations(_sd) => todo!(),
+        PascalExpr::CompoundStatement(_cs) => todo!(),
     }
 }
 
@@ -386,7 +384,7 @@ where
 }
 
 fn print_program_from_subprogram_declaration<TNext>(
-    sd: &SubprogramDeclaration,
+    _sd: &SubprogramDeclaration,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
 where

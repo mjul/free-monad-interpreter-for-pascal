@@ -368,7 +368,9 @@ pub(crate) enum TokenError {
 
 impl Display for TokenError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        match self {
+            TokenError::InvalidIdentifier(id) => write!(f, "Token error - invalid identifier: {}", id),
+        }
     }
 }
 
