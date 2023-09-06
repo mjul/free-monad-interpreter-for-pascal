@@ -123,11 +123,10 @@ It is quirky and not very intuitive, but overall Pest is still quite nice to wor
 - Quentin Duval, Free Monads: from the basics to composable and effectful stream processing.
   Idris. https://quentinduval.github.io/blog/2017/11/13/free-monads-intro.html
 - Functors in the Haskell Wiki, https://wiki.haskell.org/Category_theory/Functor
-- Free structures (including Free Monads) in the Haskell Wiki, https://wiki.haskell.org/Free_structure- Scott Wlaschin,
-  Turtle Graphics in F# using Free
-  Monads. https://fsharpforfunandprofit.com/posts/13-ways-of-looking-at-a-turtle-2/#way13
-- Mark Seemann, Hello, Pure Command-Line
-  Interaction, https://blog.ploeh.dk/2017/07/11/hello-pure-command-line-interaction/
+- Free structures (including Free Monads) in the Haskell Wiki, https://wiki.haskell.org/Free_structure
+- Functors, Applicatives, And Monads In Pictures, https://www.adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html
+- Scott Wlaschin,  Turtle Graphics in F# using Free Monads. https://fsharpforfunandprofit.com/posts/13-ways-of-looking-at-a-turtle-2/#way13
+- Mark Seemann, Hello, Pure Command-Line Interaction, https://blog.ploeh.dk/2017/07/11/hello-pure-command-line-interaction/
 - Mark Seemann, Combining Free Monads in Haskell, https://blog.ploeh.dk/2017/07/24/combining-free-monads-in-haskell/
 - Higher Free macro for Rust, https://github.com/soulsource/higher-free-macro
 
