@@ -106,7 +106,7 @@ pub(crate) enum StandardType {
 }
 
 #[derive(Debug)]
-pub(crate) struct SubprogramDeclarations(Vec<SubprogramDeclaration>);
+pub(crate) struct SubprogramDeclarations(pub(crate) Vec<SubprogramDeclaration>);
 
 impl SubprogramDeclarations {
     /// Create an empty [SubprogramDeclarations]

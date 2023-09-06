@@ -19,8 +19,8 @@ use std::ops::Deref;
 use crate::il::{
     AssignmentStatement, CompoundStatement, DeclarationsExpr, Expression, ExpressionList, Factor,
     Id, IdentifierList, IfThenElseStatement, MulOp, NonEmptyVec, PascalExpr, ProcedureStatement,
-    RelOp, SimpleExpression, StandardType, Statement, SubprogramDeclarations, Term, Type,
-    VarDeclaration, Variable, WhileDoStatement,
+    RelOp, SimpleExpression, StandardType, Statement, SubprogramDeclaration,
+    SubprogramDeclarations, Term, Type, VarDeclaration, Variable, WhileDoStatement,
 };
 
 use super::super::il::ProgramExpr;
@@ -373,8 +373,28 @@ fn print_program_from_subprogram_declarations<TNext>(
 where
     TNext: Default,
 {
-    // TODO: implement this
-    //todo!()
+    let SubprogramDeclarations(ds) = spds;
+    match ds.len() {
+        // In the empty case, there is no semicolon terminator so we just return the continuation
+        0 => k,
+        // In the other cases, add semicolon terminator after each declaration
+        _ => print_program_terminators(
+            ds,
+            &print_program_from_subprogram_declaration,
+            &|k| PrintProgram::write_ln(";".to_string(), k),
+            k,
+        ),
+    }
+}
+
+fn print_program_from_subprogram_declaration<TNext>(
+    sd: &SubprogramDeclaration,
+    k: PrintProgram<TNext>,
+) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    todo!("print_program_from_subprogram_declaration");
     k
 }
 
@@ -414,7 +434,7 @@ where
 }
 
 /// Build a print program from a slice of `T`s
-/// and functions to build the elementes of the slice and
+/// and functions to build the elements of the slice and
 /// the interposed elements.
 /// For example, build a comma-separated list from a slice of expressions.
 fn print_program_interpose<T, TNext>(
@@ -437,6 +457,21 @@ where
             )
         }
     }
+}
+
+/// Interweave a print program to add terminators after every element of a slice,
+/// for example to terminate a list of declarations with semicolon.
+fn print_program_terminators<T, TNext>(
+    xs: &[T],
+    print_x: &dyn Fn(&T, PrintProgram<TNext>) -> PrintProgram<TNext>,
+    print_interpose: &dyn Fn(PrintProgram<TNext>) -> PrintProgram<TNext>,
+    k: PrintProgram<TNext>,
+) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    // Interpose and add the trailing terminator
+    print_program_interpose(xs, print_x, print_interpose, print_interpose(k))
 }
 
 fn print_program_from_optional_statements<TNext>(
