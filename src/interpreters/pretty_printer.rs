@@ -718,11 +718,17 @@ fn print_program_from_id<TNext>(id: &Id, k: PrintProgram<TNext>) -> PrintProgram
     PrintProgram::write(id.to_string(), k)
 }
 
-fn print_program_from_string<TNext>(s: &String, k: PrintProgram<TNext>) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+/// Print a string literal with apostrophes escaped.
+/// For example, `foo'bar` becomes `'foo''bar'`.
+fn print_program_from_string_literal<TNext>(
+    s: &String,
+    k: PrintProgram<TNext>,
+) -> PrintProgram<TNext>
+where
+    TNext: Default,
 {
-    PrintProgram::write(format!("'{}'", s).to_string(), k)
+    let espaced = s.replace("'", "''");
+    PrintProgram::write(format!("'{}'", espaced).to_string(), k)
 }
 
 fn print_program_from_identifier_list<TNext>(
@@ -753,6 +759,37 @@ mod tests {
     use crate::examples;
 
     use super::*;
+
+    #[test]
+    fn pretty_print_string_with_apostrophes() {
+        let p = ProgramExpr::new(
+            Id::new_from_str("helloWorld").unwrap(),
+            IdentifierList::new(NonEmptyVec::single(Id::new_from_str("output").unwrap())),
+            DeclarationsExpr::empty(),
+            SubprogramDeclarations::empty(),
+            CompoundStatement::new(vec![Statement::procedure(ProcedureStatement::with_params(
+                // TODO: consider using an enum for the built-in procedures like writeLn
+                Id::new_from_str("writeLn").unwrap(),
+                ExpressionList::new(
+                    NonEmptyVec::new(vec![Expression::simple(SimpleExpression::term(
+                        Term::factor(Factor::string("foo'bar".to_string())),
+                    ))])
+                    .unwrap(),
+                ),
+            ))]),
+        );
+        let actual = pretty_print(p, 2);
+        let expected = r#"
+program helloWorld(output);
+begin
+  writeLn('foo''bar')
+end."#
+            .to_string()
+            .trim()
+            .to_string();
+
+        assert_eq!(expected, actual);
+    }
 
     #[test]
     fn pretty_print_hello_world() {
