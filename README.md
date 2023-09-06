@@ -39,6 +39,7 @@ Lacking the `do` syntax or a `|>` operator in Rust, the composability of the Fre
 It could probably be improved with some `and_then` functions to chain the steps and align them vertically albeit 
 a bit more verbosely.
 
+Some people have tried to alleviate this using macros, see the list of literature below.
 
 # Compiler Front-End
 
@@ -128,6 +129,7 @@ It is quirky and not very intuitive, but overall Pest is still quite nice to wor
 - Mark Seemann, Hello, Pure Command-Line
   Interaction, https://blog.ploeh.dk/2017/07/11/hello-pure-command-line-interaction/
 - Mark Seemann, Combining Free Monads in Haskell, https://blog.ploeh.dk/2017/07/24/combining-free-monads-in-haskell/
+- Higher Free macro for Rust, https://github.com/soulsource/higher-free-macro
 
 ## Notable Libraries
 
