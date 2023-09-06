@@ -162,8 +162,8 @@ enum PrintProgram<T> {
 }
 
 impl<T> PrintProgram<T>
-    where
-        T: Default,
+where
+    T: Default,
 {
     /// Stop constructor
     fn stop() -> Self {
@@ -250,8 +250,8 @@ impl PrettyPrintContext {
 
 /// Translate the Pascal expression into a print-language expression.
 fn print_program_from_pascal<TNext>(pascal: &PascalExpr) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match pascal {
         PascalExpr::Program(p) => print_program_from_program(p),
@@ -263,8 +263,8 @@ fn print_program_from_pascal<TNext>(pascal: &PascalExpr) -> PrintProgram<TNext>
 }
 
 fn print_program_from_program<TNext>(p: &ProgramExpr) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match p {
         ProgramExpr {
@@ -299,8 +299,8 @@ fn print_program_from_declarations<TNext>(
     decl_expr: &DeclarationsExpr,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     let DeclarationsExpr(vds) = decl_expr;
     match vds.is_empty() {
@@ -311,7 +311,7 @@ fn print_program_from_declarations<TNext>(
             &print_program_from_variable_declaration,
             &|k_pi| PrintProgram::write_ln("".to_string(), k_pi),
             k,
-        )
+        ),
     }
 }
 
@@ -319,8 +319,8 @@ fn print_program_from_variable_declaration<TNext>(
     vd: &VarDeclaration,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     let VarDeclaration(il, ty) = vd;
     PrintProgram::inc_indent(PrintProgram::write_ln(
@@ -339,8 +339,8 @@ fn print_program_from_variable_declaration<TNext>(
 }
 
 fn print_program_from_type<TNext>(ty: &Type, k: PrintProgram<TNext>) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match ty {
         Type::StandardType(st) => print_program_from_standard_type(st, k),
@@ -351,15 +351,15 @@ fn print_program_from_standard_type<TNext>(
     st: &StandardType,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     PrintProgram::write(
         match st {
             StandardType::Integer => "integer",
             StandardType::Real => "real",
         }
-            .to_string(),
+        .to_string(),
         k,
     )
 }
@@ -368,8 +368,8 @@ fn print_program_from_subprogram_declarations<TNext>(
     spds: &SubprogramDeclarations,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     let SubprogramDeclarations(ds) = spds;
     match ds.is_empty() {
@@ -389,8 +389,8 @@ fn print_program_from_subprogram_declaration<TNext>(
     sd: &SubprogramDeclaration,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     todo!("print_program_from_subprogram_declaration");
     k
@@ -400,8 +400,8 @@ fn print_program_from_compound_statement<TNext>(
     cs: &CompoundStatement,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     let CompoundStatement(stmts) = cs;
 
@@ -425,8 +425,8 @@ fn print_program_surround<TNext>(
     body_k: PrintProgram<TNext>,
     tail_k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     PrintProgram::stop()
 }
@@ -441,8 +441,8 @@ fn print_program_interpose<T, TNext>(
     print_interpose: &dyn Fn(PrintProgram<TNext>) -> PrintProgram<TNext>,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match xs.len() {
         0 => k,
@@ -465,8 +465,8 @@ fn print_program_terminators<T, TNext>(
     print_interpose: &dyn Fn(PrintProgram<TNext>) -> PrintProgram<TNext>,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     // Interpose and add the trailing terminator
     print_program_interpose(xs, print_x, print_interpose, print_interpose(k))
@@ -476,8 +476,8 @@ fn print_program_from_optional_statements<TNext>(
     stmts: &[Statement],
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     print_program_interpose(
         stmts,
@@ -491,8 +491,8 @@ fn print_program_from_statement<TNext>(
     stmt: &Statement,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match stmt {
         Statement::Assignment(asn) => print_program_from_assignment_statement(asn, k),
@@ -508,8 +508,8 @@ fn print_program_from_assignment_statement<TNext>(
     asn: &AssignmentStatement,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match asn {
         AssignmentStatement(lvar, val) => print_program_from_variable(
@@ -520,8 +520,8 @@ fn print_program_from_assignment_statement<TNext>(
 }
 
 fn print_program_from_variable<TNext>(var: &Variable, k: PrintProgram<TNext>) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match var {
         Variable::Id(id) => print_program_from_id(id, k),
@@ -539,8 +539,8 @@ fn print_program_from_procedure_statement<TNext>(
     ps: &ProcedureStatement,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match ps {
         ProcedureStatement(id, None) => PrintProgram::write(id.to_string(), k),
@@ -555,8 +555,8 @@ fn print_program_from_if_then_else_statement<TNext>(
     ites: &IfThenElseStatement,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match ites {
         IfThenElseStatement(cond_expr, then_stmt, else_stmt) => PrintProgram::write(
@@ -588,8 +588,8 @@ fn print_program_from_while_do_statement<TNext>(
     wds: &WhileDoStatement,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match wds {
         WhileDoStatement(expr, stmt) => PrintProgram::write(
@@ -609,8 +609,8 @@ fn print_program_from_expression_list<TNext>(
     el: &ExpressionList,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     let ExpressionList(NonEmptyVec(exprs)) = el;
     print_program_from_expression_slice(exprs, k)
@@ -620,8 +620,8 @@ fn print_program_from_expression_slice<TNext>(
     el: &[Expression],
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     print_program_interpose(
         el,
@@ -635,8 +635,8 @@ fn print_program_from_expression<TNext>(
     el: &Expression,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match el {
         Expression::Simple(se) => print_program_from_simple_expression(se.deref(), k),
@@ -664,8 +664,8 @@ fn print_program_from_simple_expression<TNext>(
     se: &SimpleExpression,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match se {
         SimpleExpression::Term(term) => print_program_from_term(term, k),
@@ -673,8 +673,8 @@ fn print_program_from_simple_expression<TNext>(
 }
 
 fn print_program_from_term<TNext>(t: &Term, k: PrintProgram<TNext>) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match t {
         Term::Factor(f) => print_program_from_factor(f, k),
@@ -698,8 +698,8 @@ fn print_program_from_term<TNext>(t: &Term, k: PrintProgram<TNext>) -> PrintProg
 }
 
 fn print_program_from_factor<TNext>(f: &Factor, k: PrintProgram<TNext>) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match f {
         Factor::Id(id) => print_program_from_id(id, k),
@@ -707,13 +707,13 @@ fn print_program_from_factor<TNext>(f: &Factor, k: PrintProgram<TNext>) -> Print
         Factor::Number(n) => PrintProgram::write(n.to_string(), k),
         Factor::Parens(_) => todo!(),
         Factor::Not(_) => todo!(),
-        Factor::String(s) => print_program_from_string(s, k),
+        Factor::String(s) => print_program_from_string_literal(s, k),
     }
 }
 
 fn print_program_from_id<TNext>(id: &Id, k: PrintProgram<TNext>) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     PrintProgram::write(id.to_string(), k)
 }
@@ -735,16 +735,16 @@ fn print_program_from_identifier_list<TNext>(
     il: &IdentifierList,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     let IdentifierList(NonEmptyVec(ids)) = il;
     print_program_from_id_slice(ids, k)
 }
 
 fn print_program_from_id_slice<TNext>(il: &[Id], k: PrintProgram<TNext>) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     print_program_interpose(
         il,
