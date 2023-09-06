@@ -63,7 +63,7 @@ impl IdentifierList {
 
 // TODO: elaborate on this
 #[derive(Debug, PartialEq)]
-pub(crate) struct DeclarationsExpr(Vec<VarDeclaration>);
+pub(crate) struct DeclarationsExpr(pub(crate) Vec<VarDeclaration>);
 
 impl DeclarationsExpr {
     /// Create an empty declarations expression (no var declarations)

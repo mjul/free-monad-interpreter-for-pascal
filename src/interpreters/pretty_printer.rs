@@ -17,9 +17,10 @@ use std::fmt::{Debug, Formatter, Pointer};
 use std::ops::Deref;
 
 use crate::il::{
-    AssignmentStatement, CompoundStatement, Expression, ExpressionList, Factor, Id, IdentifierList,
-    IfThenElseStatement, MulOp, NonEmptyVec, PascalExpr, ProcedureStatement, RelOp,
-    SimpleExpression, Statement, Term, Variable, WhileDoStatement,
+    AssignmentStatement, CompoundStatement, DeclarationsExpr, Expression, ExpressionList, Factor,
+    Id, IdentifierList, IfThenElseStatement, MulOp, NonEmptyVec, PascalExpr, ProcedureStatement,
+    RelOp, SimpleExpression, StandardType, Statement, SubprogramDeclarations, Term, Type,
+    VarDeclaration, Variable, WhileDoStatement,
 };
 
 use super::super::il::ProgramExpr;
@@ -272,24 +273,109 @@ where
             declarations,
             subprogram_declarations,
             compound_statement,
-        } => {
-            PrintProgram::write(
-                format!("program {}(", id.to_string()),
-                print_program_from_identifier_list(
-                    identifier_list,
-                    PrintProgram::write_ln(
-                        ");".to_string(),
-                        // TODO: declarations
-                        // TODO: subprogram decls
-                        print_program_from_compound_statement(
-                            compound_statement,
-                            PrintProgram::write(".".to_string(), PrintProgram::stop()),
+        } => PrintProgram::write(
+            format!("program {}(", id.to_string()),
+            print_program_from_identifier_list(
+                identifier_list,
+                PrintProgram::write_ln(
+                    ");".to_string(),
+                    print_program_from_declarations(
+                        declarations,
+                        PrintProgram::write_ln(
+                            "".to_string(),
+                            print_program_from_subprogram_declarations(
+                                subprogram_declarations,
+                                PrintProgram::write_ln(
+                                    "".to_string(),
+                                    print_program_from_compound_statement(
+                                        compound_statement,
+                                        PrintProgram::write(".".to_string(), PrintProgram::stop()),
+                                    ),
+                                ),
+                            ),
                         ),
                     ),
                 ),
-            )
-        }
+            ),
+        ),
     }
+}
+
+fn print_program_from_declarations<TNext>(
+    decl_expr: &DeclarationsExpr,
+    k: PrintProgram<TNext>,
+) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    let DeclarationsExpr(vds) = decl_expr;
+    print_program_interpose(
+        vds,
+        &print_program_from_variable_declaration,
+        &|k_pi| PrintProgram::write_ln("".to_string(), k_pi),
+        k,
+    )
+}
+
+fn print_program_from_variable_declaration<TNext>(
+    vd: &VarDeclaration,
+    k: PrintProgram<TNext>,
+) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    let VarDeclaration(il, ty) = vd;
+    PrintProgram::inc_indent(PrintProgram::write_ln(
+        "var".to_string(),
+        print_program_from_identifier_list(
+            il,
+            PrintProgram::write(
+                " : ".to_string(),
+                print_program_from_type(
+                    ty,
+                    PrintProgram::dec_indent(PrintProgram::write(";".to_string(), k)),
+                ),
+            ),
+        ),
+    ))
+}
+
+fn print_program_from_type<TNext>(ty: &Type, k: PrintProgram<TNext>) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    match ty {
+        Type::StandardType(st) => print_program_from_standard_type(st, k),
+    }
+}
+
+fn print_program_from_standard_type<TNext>(
+    st: &StandardType,
+    k: PrintProgram<TNext>,
+) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    PrintProgram::write(
+        match st {
+            StandardType::Integer => "integer",
+            StandardType::Real => "real",
+        }
+        .to_string(),
+        k,
+    )
+}
+
+fn print_program_from_subprogram_declarations<TNext>(
+    spds: &SubprogramDeclarations,
+    k: PrintProgram<TNext>,
+) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    // TODO: implement this
+    //todo!()
+    k
 }
 
 fn print_program_from_compound_statement<TNext>(
@@ -657,6 +743,9 @@ end."#
         let actual = pretty_print(p, 2);
         // TODO: elaborate this, for now it is just a smoke test
         assert!(actual.contains("program fizzbuzz(output);"));
+        assert!(actual.contains("var"));
+        assert_eq!(actual, "1");
+        assert!(actual.contains("i : integer;"));
         assert!(actual.contains("'Fizz'"));
         assert!(actual.contains("'Buzz'"));
         assert!(actual.contains("'FizzBuzz'"));
