@@ -123,7 +123,7 @@ impl SubprogramDeclarations {
 pub(crate) struct SubprogramDeclaration {}
 
 /// A compound statement consisting of a `begin` and `end` block containing zero or more statements.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct CompoundStatement(pub(crate) Vec<Statement>);
 
 impl CompoundStatement {
@@ -132,7 +132,7 @@ impl CompoundStatement {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Statement {
     Assignment(AssignmentStatement),
     Procedure(ProcedureStatement),
@@ -166,7 +166,7 @@ impl Statement {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssignmentStatement(pub(crate) Variable, pub(crate) Expression);
 
 impl AssignmentStatement {
@@ -176,7 +176,7 @@ impl AssignmentStatement {
 }
 
 /// A variable, simplified: here just an identifier or an array index
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Variable {
     Id(Id),
     ArrayIndex(Id, Expression),
@@ -193,7 +193,7 @@ impl Variable {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct ProcedureStatement(pub(crate) Id, pub(crate) Option<ExpressionList>);
 
 impl ProcedureStatement {
@@ -206,7 +206,7 @@ impl ProcedureStatement {
 }
 
 /// An `if` `then` `else` statement
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct IfThenElseStatement(
     pub(crate) Box<Expression>,
     pub(crate) Box<Statement>,
@@ -220,7 +220,7 @@ impl IfThenElseStatement {
 }
 
 /// A `while` *expression* `do` statement
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct WhileDoStatement(pub(crate) Box<Expression>, pub(crate) Box<Statement>);
 
 impl WhileDoStatement {
@@ -248,7 +248,7 @@ impl<T> NonEmptyVec<T> {
 }
 
 /// A non-empty list of expressions
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct ExpressionList(pub(crate) NonEmptyVec<Expression>);
 
 impl ExpressionList {
@@ -258,7 +258,7 @@ impl ExpressionList {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Expression {
     Simple(Box<SimpleExpression>),
     Relation(Box<SimpleExpression>, RelOp, Box<SimpleExpression>),
@@ -275,7 +275,7 @@ impl Expression {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum RelOp {
     Equal,
     NotEqual,
@@ -286,7 +286,7 @@ pub(crate) enum RelOp {
     // TODO: IN
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum SimpleExpression {
     Term(Term),
     // TODO: SignTerm(Sign, Term),
@@ -299,7 +299,7 @@ impl SimpleExpression {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Term {
     Factor(Factor),
     MulOp(Box<Factor>, MulOp, Box<Term>),
@@ -314,7 +314,7 @@ impl Term {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Factor {
     Id(Id),
     IdWithParams(Id, ExpressionList),
@@ -327,8 +327,8 @@ pub(crate) enum Factor {
 }
 
 impl Factor {
-    pub(crate) fn string(s: &str) -> Self {
-        Self::String(String::from(s))
+    pub(crate) fn string(s: String) -> Self {
+        Self::String(s)
     }
     pub(crate) fn id(id: Id) -> Self {
         Self::Id(id)
@@ -338,20 +338,20 @@ impl Factor {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Sign {
     Plus,
     Minus,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum AddOp {
     Plus,
     Minus,
     Or,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum MulOp {
     Star,
     Slash,
@@ -424,7 +424,7 @@ mod tests {
                 Id::new_from_str("writeLn").unwrap(),
                 ExpressionList::new(
                     NonEmptyVec::new(vec![Expression::simple(SimpleExpression::term(
-                        Term::factor(Factor::string("Hello, World!")),
+                        Term::factor(Factor::string("Hello, World!".to_string())),
                     ))])
                     .unwrap(),
                 ),

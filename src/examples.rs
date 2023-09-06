@@ -27,7 +27,7 @@ pub(crate) fn hello_world() -> ProgramExpr {
             Id::new_from_str("writeLn").unwrap(),
             ExpressionList::new(
                 NonEmptyVec::new(vec![Expression::simple(SimpleExpression::term(
-                    Term::factor(Factor::string("Hello, World!")),
+                    Term::factor(Factor::string("Hello, World!".to_string())),
                 ))])
                     .unwrap(),
             ),
@@ -113,13 +113,13 @@ pub(crate) fn fizzbuzz() -> ProgramExpr {
                 while_leq("i", 100,
                           if_then_else(
                               mod_eq("i", 15, 0),
-                              write_ln_str("FizzBuzz"),
+                              write_ln_str("FizzBuzz".to_string()),
                               if_then_else(
                                   mod_eq("i", 3, 0),
-                                  write_ln_str("Fizz"),
+                                  write_ln_str("Fizz".to_string()),
                                   if_then_else(
                                       mod_eq("i", 5, 0),
-                                      write_ln_str("Buzz"),
+                                      write_ln_str("Buzz".to_string()),
                                       write_ln_term(Term::factor(Factor::id(Id::new_from_str("i").unwrap()))),
                                   )))),
             ]),

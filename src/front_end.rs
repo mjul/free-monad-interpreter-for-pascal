@@ -5,6 +5,7 @@
 //! see <https://pest.rs/>
 
 use std::fmt::{Display, Formatter};
+
 use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
@@ -31,8 +32,7 @@ impl Display for FrontEndError {
     }
 }
 
-impl std::error::Error for FrontEndError {
-}
+impl std::error::Error for FrontEndError {}
 
 #[derive(Debug)]
 pub(crate) enum ConversionError {
@@ -40,6 +40,7 @@ pub(crate) enum ConversionError {
     UnexpectedRuleInPair(Rule),
     ConversionError(String),
 }
+
 impl Display for ConversionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -54,9 +55,7 @@ impl Display for ConversionError {
     }
 }
 
-impl std::error::Error for ConversionError {
-
-}
+impl std::error::Error for ConversionError {}
 
 fn il_id_from(pair: &Pair<Rule>) -> Result<il::Id, ConversionError> {
     match &pair.as_rule() {
@@ -508,6 +507,7 @@ fn il_mulop_from(pair: &Pair<Rule>) -> Result<il::MulOp, ConversionError> {
 }
 
 fn il_factor_from(pair: &Pair<Rule>) -> Result<il::Factor, ConversionError> {
+    dbg!(&pair.as_str(), &pair);
     match &pair.as_rule() {
         Rule::factor => {
             let inners = pair
@@ -522,17 +522,68 @@ fn il_factor_from(pair: &Pair<Rule>) -> Result<il::Factor, ConversionError> {
                             let id = il_id_from(&p)?;
                             Ok(il::Factor::id(id))
                         }
-                        Rule::unsigned_number => {
-                            //let n = il_unsigned_number_from(&p)?;
-                            //Ok(il::Factor::number(n))
-                            todo!()
+                        Rule::unsigned_constant => {
+                            let inners = p.clone().into_inner().collect::<Vec<Pair<Rule>>>();
+                            match &inners[..] {
+                                [p] => match p.as_rule() {
+                                    Rule::unsigned_number => {
+                                        let n = p.as_str().parse::<i32>().map_err(|e| {
+                                            ConversionError::ConversionError(format!(
+                                                "Failed to parse unsigned_number: {}",
+                                                e
+                                            ))
+                                        })?;
+                                        Ok(il::Factor::number(n))
+                                    }
+                                    Rule::character_string => {
+                                        let inners = p.clone().into_inner().collect::<Vec<Pair<Rule>>>();
+                                        match &inners[..] {
+                                            [p] => match p.as_rule() {
+                                                Rule::STRING_LITERAL => {
+                                                    let s = string_from_string_literal(p)?;
+                                                    Ok(il::Factor::string(s))
+                                                }
+                                                _ => Err(ConversionError::UnexpectedRuleInPair(p.as_rule())),
+                                            },
+                                            _ => unimplemented!("il_factor_from: character_string: {:?}", inners),
+                                        }
+                                    }
+                                    _ => Err(ConversionError::UnexpectedRuleInPair(p.as_rule())),
+                                },
+                                _ => todo!("il_factor_from: unsigned_constant from: {:?}", p),
+                            }
                         }
-                        Rule::unsigned_constant => Ok(il::Factor::string(p.as_str())),
-                        _ => Err(ConversionError::UnexpectedRuleInPair(p.as_rule())),
+                        _ => Err(ConversionError::UnexpectedRuleInPair(p.as_rule()))
                     }
                 }
                 _ => todo!("il_factor_from: {:?}", inners),
             }
+        }
+        _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
+    }
+}
+
+use std::slice::Windows;
+
+/// Convert a Pascal string literal to a Rust string.
+fn string_from_string_literal(pair: &Pair<Rule>) -> Result<String, ConversionError> {
+    match pair.as_rule() {
+        Rule::STRING_LITERAL => {
+            let mut result = String::new();
+            let mut cursor = pair.as_str().chars().into_iter().peekable();
+            while let Some(ch) = cursor.next() {
+                let next_ch = cursor.peek();
+                match (ch, next_ch) {
+                    ('\'', Some('\'')) => {
+                        result.push('\'');
+                        // consume the second quote
+                        cursor.next();
+                    }
+                    ('\'', _) => { /* start or end quote, ignore and advance to next */ }
+                    (c, _) => result.push(c.clone()),
+                }
+            }
+            Ok(result)
         }
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
@@ -558,21 +609,21 @@ fn il_program_from(pair: Pair<Rule>) -> Result<il::ProgramExpr, ConversionError>
             let inners: Vec<Pair<Rule>> = pair.into_inner().into_iter().collect();
             match &inners[..] {
                 [_program, id, _lparen, identifier_list, _rparen, _semicolon, declarations, subprogram_declarations, compound_statement, ..] =>
-                {
-                    let id = il_id_from(&id)?;
-                    let identifier_list = il_identifier_list_from(identifier_list)?;
-                    let declarations = il_declarations_from(declarations)?;
-                    let subprogram_declarations =
-                        il_subprogram_declarations_from(subprogram_declarations)?;
-                    let compound_statement = il_compound_statement_from(compound_statement)?;
-                    Ok(il::ProgramExpr::new(
-                        id,
-                        identifier_list,
-                        declarations,
-                        subprogram_declarations,
-                        compound_statement,
-                    ))
-                }
+                    {
+                        let id = il_id_from(&id)?;
+                        let identifier_list = il_identifier_list_from(identifier_list)?;
+                        let declarations = il_declarations_from(declarations)?;
+                        let subprogram_declarations =
+                            il_subprogram_declarations_from(subprogram_declarations)?;
+                        let compound_statement = il_compound_statement_from(compound_statement)?;
+                        Ok(il::ProgramExpr::new(
+                            id,
+                            identifier_list,
+                            declarations,
+                            subprogram_declarations,
+                            compound_statement,
+                        ))
+                    }
                 _ => Err(ConversionError::ConversionError(
                     "Unexpected number of pairs under program rule".to_string(),
                 )),
@@ -608,7 +659,8 @@ mod tests {
     use paste::paste;
     use pest::iterators::Pairs;
 
-    use crate::il::{DeclarationsExpr, VarDeclaration};
+    use crate::il::{CompoundStatement, DeclarationsExpr, Id, VarDeclaration};
+    use crate::il::Statement::Assignment;
 
     use super::*;
 
@@ -755,6 +807,52 @@ mod tests {
         r#"program helloWorld(output);begin writeLn('Hello, World!') end."#
     );
 
+
+    #[test]
+    fn string_from_string_literal_with_no_escaped_quotes_returns_inner_string() {
+        let parsed = PascalParser::parse(Rule::STRING_LITERAL, "'foo'").unwrap();
+        let pair = parsed.into_iter().next().unwrap();
+        let actual = string_from_string_literal(&pair).unwrap();
+        assert_eq!("foo", actual);
+    }
+
+    #[test]
+    fn string_from_string_literal_with_escaped_quotes_returns_unescaped_inner_string() {
+        let parsed = PascalParser::parse(Rule::STRING_LITERAL, "'foo''bar''''baz'").unwrap();
+        let pair = parsed.into_iter().next().unwrap();
+        let actual = string_from_string_literal(&pair).unwrap();
+        assert_eq!("foo'bar''baz", actual);
+    }
+
+    #[test]
+    fn il_factor_from_from_pascal_parser_parse_factor_of_const_string_has_right_type() {
+        let parsed = PascalParser::parse(Rule::factor, "'Hello, World!'").unwrap();
+        let actual = il_factor_from(&parsed.into_iter().next().unwrap()).unwrap();
+        assert_eq!(il::Factor::string("Hello, World!".to_string()), actual);
+    }
+
+    #[test]
+    fn il_factor_from_from_pascal_parser_parse_factor_of_const_string_with_escapes_has_right_type() {
+        let parsed = PascalParser::parse(Rule::factor, "'abc''def'").unwrap();
+        let actual = il_factor_from(&parsed.into_iter().next().unwrap()).unwrap();
+        assert_eq!(il::Factor::string("abc'def".to_string()), actual);
+    }
+
+    #[test]
+    fn il_factor_from_from_pascal_parser_parse_factor_of_const_number_has_right_type() {
+        let parsed = PascalParser::parse(Rule::factor, "42").unwrap();
+        dbg!(&parsed);
+        let actual = il_factor_from(&parsed.into_iter().next().unwrap()).unwrap();
+        assert_eq!(il::Factor::number(42), actual);
+    }
+
+    #[test]
+    fn il_factor_from_from_pascal_parser_parse_factor_of_identifier_has_right_type() {
+        let parsed = PascalParser::parse(Rule::factor, "x").unwrap();
+        let actual = il_factor_from(&parsed.into_iter().next().unwrap()).unwrap();
+        assert_eq!(il::Factor::id(Id::new_from_str("x").unwrap()), actual);
+    }
+
     #[test]
     fn parse_program_string_hello_world_returns_valid_il() {
         let actual = parse_program_string(r#"program helloWorld(output);begin writeLn('Hello, World!') end."#).unwrap();
@@ -768,7 +866,7 @@ mod tests {
                 il::Id::new_from_str("writeLn").unwrap(),
                 il::ExpressionList::new(
                     il::NonEmptyVec::new(vec![il::Expression::simple(il::SimpleExpression::term(
-                        il::Term::factor(il::Factor::string("Hello, World!")),
+                        il::Term::factor(il::Factor::string("Hello, World!".to_string())),
                     ))])
                         .unwrap(),
                 ),
@@ -811,5 +909,12 @@ mod tests {
                     il::NonEmptyVec::single(il::Id::new_from_str("i").unwrap())),
                 il::Type::standard(il::StandardType::Integer)),
         ]), actual.declarations);
+
+        let CompoundStatement(stmts) = actual.compound_statement;
+
+        assert_eq!(Assignment(il::AssignmentStatement::new(
+            il::Variable::id(il::Id::new_from_str("i").unwrap()),
+            il::Expression::simple(il::SimpleExpression::term(il::Term::factor(il::Factor::number(1)))))),
+                   stmts[0]);
     }
 }
