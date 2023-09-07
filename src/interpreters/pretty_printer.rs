@@ -844,36 +844,6 @@ mod tests {
         assert_eq!("'foo''bar'", actual);
     }
 
-    #[test]
-    fn pretty_print_string_with_apostrophes() {
-        let p = ProgramExpr::new(
-            Id::new_from_str("helloWorld").unwrap(),
-            IdentifierList::new(NonEmptyVec::single(Id::new_from_str("output").unwrap())),
-            DeclarationsExpr::empty(),
-            SubprogramDeclarations::empty(),
-            CompoundStatement::new(vec![Statement::procedure(ProcedureStatement::with_params(
-                // TODO: consider using an enum for the built-in procedures like writeLn
-                Id::new_from_str("writeLn").unwrap(),
-                ExpressionList::new(
-                    NonEmptyVec::new(vec![Expression::simple(SimpleExpression::term(
-                        Term::factor(Factor::string("foo'bar".to_string())),
-                    ))])
-                    .unwrap(),
-                ),
-            ))]),
-        );
-        let actual = pretty_print(p, 2);
-        let expected = r#"
-program helloWorld(output);
-begin
-  writeLn('foo''bar')
-end."#
-            .to_string()
-            .trim()
-            .to_string();
-
-        assert_eq!(expected, actual);
-    }
 
     #[test]
     fn pretty_print_hello_world() {
