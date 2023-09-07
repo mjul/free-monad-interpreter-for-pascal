@@ -757,6 +757,70 @@ mod tests {
 
     use super::*;
 
+    fn run_interpreter(pp: &PrintProgram<PrettyPrintContext>) -> String {
+        let start_state = PrettyPrintContext::new(2);
+        let end_state: PrettyPrintContext = interpret_print_program(&pp, start_state);
+        end_state.output
+    }
+
+    #[test]
+    fn print_program_from_factor_id() {
+        let f = Factor::id(Id::new_from_str("x").unwrap());
+        let pl = print_program_from_factor(&f, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!("x", actual);
+    }
+
+    #[test, ignore]
+    fn print_program_from_factor_id_with_params() {
+        let f = Factor::id_with_params(
+            Id::new_from_str("foo").unwrap(),
+            ExpressionList::new(
+                NonEmptyVec::new(vec![Expression::simple(SimpleExpression::term(
+                    Term::factor(Factor::number(1)),
+                ))])
+                .unwrap(),
+            ),
+        );
+        let pl = print_program_from_factor(&f, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!("foo(1)", actual);
+    }
+
+    #[test]
+    fn print_program_from_factor_number() {
+        let f = Factor::number(42);
+        let pl = print_program_from_factor(&f, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!("42", actual);
+    }
+
+    #[test, ignore]
+    fn print_program_from_factor_parens() {
+        let f = Factor::parens(Expression::simple(SimpleExpression::term(Term::factor(
+            Factor::id(Id::new_from_str("x").unwrap()),
+        ))));
+        let pl = print_program_from_factor(&f, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!("(x)", actual);
+    }
+
+    #[test, ignore]
+    fn print_program_from_factor_not() {
+        let f = Factor::not(Factor::id(Id::new_from_str("x").unwrap()));
+        let pl = print_program_from_factor(&f, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!("not x", actual);
+    }
+
+    #[test]
+    fn print_program_from_factor_string_with_apostrophes() {
+        let f = Factor::string("foo'bar".to_string());
+        let pl = print_program_from_factor(&f, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!("'foo''bar'", actual);
+    }
+
     #[test]
     fn pretty_print_string_with_apostrophes() {
         let p = ProgramExpr::new(
