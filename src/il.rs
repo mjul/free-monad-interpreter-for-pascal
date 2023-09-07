@@ -120,7 +120,36 @@ impl SubprogramDeclarations {
 }
 
 #[derive(Debug)]
-pub(crate) struct SubprogramDeclaration {}
+pub(crate) struct SubprogramDeclaration(
+    pub(crate) SubprogramHead,
+    pub(crate) DeclarationsExpr,
+    pub(crate) CompoundStatement,
+);
+
+impl SubprogramDeclaration {
+    pub(crate) fn new(head: SubprogramHead, decls: DeclarationsExpr, cs: CompoundStatement) -> SubprogramDeclaration {
+        Self(head, decls, cs)
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum SubprogramHead {
+    Function(Id, Vec<ParameterGroup>, StandardType),
+    Procedure(Id, Vec<ParameterGroup>),
+}
+
+impl SubprogramHead {
+    pub(crate) fn function(id: Id, arguments: Vec<ParameterGroup>, ty: StandardType) -> Self {
+        Self::Function(id, arguments, ty)
+    }
+    pub(crate) fn procedure(id: Id, arguments: Vec<ParameterGroup>) -> Self {
+        Self::Procedure(id, arguments)
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct ParameterGroup(IdentifierList, Type);
+
 
 /// A compound statement consisting of a `begin` and `end` block containing zero or more statements.
 #[derive(Debug, Clone, PartialEq)]
@@ -428,7 +457,7 @@ mod tests {
                     NonEmptyVec::new(vec![Expression::simple(SimpleExpression::term(
                         Term::factor(Factor::string("Hello, World!".to_string())),
                     ))])
-                    .unwrap(),
+                        .unwrap(),
                 ),
             ))]),
         );

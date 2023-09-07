@@ -100,6 +100,18 @@ it will match `<` and `>` for both `<`, `<=` and `>`and `>=`. It will not match 
 
 It is quirky and not very intuitive, but overall Pest is still quite nice to work with.
 
+### Parser Code Should Take Ownership of the Parsing Result
+It looks like Pest has been designed for the parsing code taking ownership of the result, 
+rather than borrowing it.
+The front-end code, however, was initially written to borrow the result. Because Pest 
+parsing code uses the  `.into_inner()` method to get the result, which takes ownership,
+we have to clone some Pairs sometimes. 
+
+This can be avoided. See, *e.g.* the parsing code for `subprogram_declaration` that is written
+using a style that fits better with Pest. Changing the parsing functions to take ownership
+we could avoid cloning in the parsing stage.
+
+
 # Literature
 
 ## Pascal

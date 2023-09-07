@@ -11,7 +11,7 @@ use pest::Parser;
 use pest_derive::Parser;
 
 use crate::il;
-use crate::il::{DeclarationsExpr, StandardType, Type};
+use crate::il::{DeclarationsExpr, ParameterGroup, StandardType, SubprogramHead, Type};
 
 #[derive(Parser)]
 #[grammar = "src/front_end/pascal_grammar.pest"]
@@ -187,14 +187,130 @@ fn il_standard_type_from(pair: &Pair<Rule>) -> Result<StandardType, ConversionEr
 fn il_subprogram_declarations_from(
     pair: &Pair<Rule>,
 ) -> Result<il::SubprogramDeclarations, ConversionError> {
+    // Try another matching strategy, implementing it by peeking rather than cloning and iterating
     match &pair.as_rule() {
-        Rule::subprogram_declarations => match pair.clone().into_inner().next() {
-            None => Ok(il::SubprogramDeclarations::empty()),
-            Some(_p) => todo!(),
+        Rule::subprogram_declarations => {
+            let mut inners = pair.clone().into_inner().into_iter().peekable();
+            match inners.peek() {
+                None => Ok(il::SubprogramDeclarations::empty()),
+                Some(_p) => {
+                    let mut subprograms = vec![];
+                    while let Some(p) = inners.next() {
+                        match p.as_rule() {
+                            Rule::subprogram_declaration => {
+                                let sd = il_subprogram_declaration_from(&p)?;
+                                subprograms.push(sd);
+                            }
+                            Rule::SEMICOLON => { /* ignore terminators */ }
+                            _ => {
+                                return Err(ConversionError::UnexpectedRuleInPair(
+                                    p.as_rule(),
+                                ));
+                            }
+                        }
+                    }
+                    Ok(il::SubprogramDeclarations::new(subprograms))
+                }
+            }
+        }
+        _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
+    }
+}
+
+fn il_subprogram_declaration_from(pair: &Pair<Rule>) -> Result<il::SubprogramDeclaration, ConversionError> {
+    // Another non-cloning strategy, using .next() without peeking
+    // We still have to clone to be consistent with the other functions that all borrow the Pair.
+    // If we refactor to taking ownership of the Pair, we can avoid cloning, but the we should do it for
+    // all the parsing functions.
+    match &pair.as_rule() {
+        Rule::subprogram_declaration => {
+            let mut inners = pair.clone().into_inner();
+            match (inners.next(), inners.next(), inners.next(), inners.next()) {
+                (Some(subprogram_head), Some(declarations), Some(compound_statement), None) => {
+                    let sh = il_subprogram_head_from(&subprogram_head)?;
+                    let ds = il_declarations_from(&declarations)?;
+                    let cs = il_compound_statement_from(&compound_statement)?;
+                    Ok(il::SubprogramDeclaration::new(sh, ds, cs))
+                }
+                _ => Err(ConversionError::ConversionError("Unexpected inner pairs under subprogram_declaration rule".to_string())),
+            }
+        }
+        _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
+    }
+}
+
+fn il_subprogram_head_from(pair: &Pair<Rule>) -> Result<SubprogramHead, ConversionError> {
+    match &pair.as_rule() {
+        Rule::subprogram_head => {
+            // If we take ownership of the pair instead of borrowing it, we can avoid cloning
+            let mut inners = pair.clone().into_inner();
+            match (inners.next(), inners.next(), inners.next(), inners.next(), inners.next(), inners.next(), inners.next()) {
+                (Some(_function), Some(id), Some(arguments), Some(_colon), Some(standard_type), Some(_semicolon), None) => {
+                    let id = il_id_from(&id)?;
+                    let params = il_parameter_groups_from_arguments(&arguments)?;
+                    let ty = il_standard_type_from(&standard_type)?;
+                    Ok(SubprogramHead::function(id, params, ty))
+                }
+                (Some(_procedure), Some(id), Some(arguments), Some(_semicolon), None, None, None) => {
+                    let id = il_id_from(&id)?;
+                    let params = il_parameter_groups_from_arguments(&arguments)?;
+                    Ok(SubprogramHead::procedure(id, params))
+                }
+                _ => Err(ConversionError::ConversionError("Unexpected inner pairs under subprogram_head rule".to_string())),
+            }
+        }
+        _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
+    }
+}
+
+/// This reads the arguments into a possibly empty vector of [ParameterGroup]s.
+fn il_parameter_groups_from_arguments(pair: &Pair<Rule>) -> Result<Vec<ParameterGroup>, ConversionError> {
+    match &pair.as_rule() {
+        Rule::arguments => {
+            // The production: arguments -> ( parameter_list ) | epsilon
+            // We have to clone since the pair is borrowed, not owned
+            let mut inners = pair.clone().into_inner().peekable();
+            match inners.peek().map(|p|p.as_rule()) {
+                None => Ok(vec![]),
+                Some(Rule::LPAREN) => {
+                    // Production variant: arguments -> ( parameter_list )
+                    inners.next(); // consume the LPAREN
+                    match (inners.next(), inners.next()) {
+                        (Some(pl), Some(_rparen)) => {
+                            let params = il_parameter_groups_from_parameter_list(&pl)?;
+                            Ok(params)
+                        },
+                        _ => Err(ConversionError::ConversionError(format!("Unexpected inner pairs under arguments rule: {:?}", pair))),
+                    }
+                },
+                _ => Err(ConversionError::ConversionError(format!("Unexpected inner pairs under arguments rule: {:?}", pair))),
+            }
         },
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
 }
+
+/// This reads the arguments into a possibly empty vector of [ParameterGroup]s.
+fn il_parameter_groups_from_parameter_list(pair: &Pair<Rule>) -> Result<Vec<ParameterGroup>, ConversionError> {
+    match &pair.as_rule() {
+        // Cloning is necessary since we have only borrowed the Pair
+        Rule::parameter_list => {
+            let mut inners = pair
+                .clone()
+                .into_inner()
+                .into_iter()
+                .peekable();
+            let mut result = vec![];
+            while let Some(p) = inners.next() {
+
+            }
+            Ok(result)
+        },
+        _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
+    }
+}
+
+
 
 fn il_compound_statement_from(pair: &Pair<Rule>) -> Result<il::CompoundStatement, ConversionError> {
     match &pair.as_rule() {

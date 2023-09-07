@@ -186,7 +186,7 @@ arguments = {
 
 // Again rewritten to avoid left-recursion
 parameter_list = {
-    identifier_list ~ COLON ~ type ~ (SEMICOLON ~ identifier_list ~ COLON ~ type)*
+    identifier_list ~ COLON ~ type ~ (SEMICOLON ~ parameter_list)?
 }
 
 compound_statement = {BEGIN ~ optional_statements ~ END}
