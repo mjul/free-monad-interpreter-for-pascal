@@ -73,7 +73,6 @@ fn interpret_print_program(
                 let next_pl = k;
                 interpret_print_program(&next_pl, next_ctx)
             }
-            _ => todo!("eval_print_language not implemented for {:?}", pi),
         },
     }
 }
