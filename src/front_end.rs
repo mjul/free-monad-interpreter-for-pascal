@@ -190,6 +190,7 @@ fn il_subprogram_declarations_from(
     // Try another matching strategy, implementing it by peeking rather than cloning and iterating
     match &pair.as_rule() {
         Rule::subprogram_declarations => {
+            dbg!(&pair.as_str(), &pair);
             let mut inners = pair.clone().into_inner().into_iter().peekable();
             match inners.peek() {
                 None => Ok(il::SubprogramDeclarations::empty()),
@@ -270,7 +271,7 @@ fn il_parameter_groups_from_arguments(pair: &Pair<Rule>) -> Result<Vec<Parameter
             // The production: arguments -> ( parameter_list ) | epsilon
             // We have to clone since the pair is borrowed, not owned
             let mut inners = pair.clone().into_inner().peekable();
-            match inners.peek().map(|p|p.as_rule()) {
+            match inners.peek().map(|p| p.as_rule()) {
                 None => Ok(vec![]),
                 Some(Rule::LPAREN) => {
                     // Production variant: arguments -> ( parameter_list )
@@ -279,13 +280,13 @@ fn il_parameter_groups_from_arguments(pair: &Pair<Rule>) -> Result<Vec<Parameter
                         (Some(pl), Some(_rparen)) => {
                             let params = il_parameter_groups_from_parameter_list(&pl)?;
                             Ok(params)
-                        },
+                        }
                         _ => Err(ConversionError::ConversionError(format!("Unexpected inner pairs under arguments rule: {:?}", pair))),
                     }
-                },
+                }
                 _ => Err(ConversionError::ConversionError(format!("Unexpected inner pairs under arguments rule: {:?}", pair))),
             }
-        },
+        }
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
 }
@@ -302,14 +303,13 @@ fn il_parameter_groups_from_parameter_list(pair: &Pair<Rule>) -> Result<Vec<Para
                 .peekable();
             let mut result = vec![];
             while let Some(p) = inners.next() {
-
+                todo!("il_parameter_groups_from_parameter_list: {:?}", p.as_rule());
             }
             Ok(result)
-        },
+        }
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
 }
-
 
 
 fn il_compound_statement_from(pair: &Pair<Rule>) -> Result<il::CompoundStatement, ConversionError> {
@@ -672,7 +672,27 @@ fn il_factor_from(pair: &Pair<Rule>) -> Result<il::Factor, ConversionError> {
                         _ => Err(ConversionError::UnexpectedRuleInPair(p.as_rule()))
                     }
                 }
-                _ => todo!("il_factor_from: {:?}", inners),
+                [lparen, expr, rparen] => {
+                    match (lparen.as_rule(), expr.as_rule(), rparen.as_rule()) {
+                        (Rule::LPAREN, Rule::expression, Rule::RPAREN) => {
+                            let e = il_expression_from(expr)?;
+                            Ok(il::Factor::parens(e))
+                        }
+                        _ => Err(ConversionError::UnexpectedRuleInPair(lparen.as_rule()))
+                    }
+                }
+                [ident, lparen, expr_list, rparen] => {
+                    match (ident.as_rule(), lparen.as_rule(), expr_list.as_rule(), rparen.as_rule()) {
+                        (Rule::IDENT, Rule::LPAREN, Rule::expression_list, Rule::RPAREN) => {
+                            let id = il_id_from(ident)?;
+                            let el = il_expression_list_from(expr_list)?;
+                            Ok(il::Factor::id_with_params(id, el))
+                        }
+                        _ => Err(ConversionError::UnexpectedRuleInPair(lparen.as_rule()))
+                    }
+                }
+                // TODO: not factor is missing (two inners)
+                _ => todo!("il_factor_from: inners {:?}", inners),
             }
         }
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
@@ -773,7 +793,7 @@ mod tests {
     use paste::paste;
     use pest::iterators::Pairs;
 
-    use crate::il::{CompoundStatement, DeclarationsExpr, Id, VarDeclaration};
+    use crate::il::{CompoundStatement, DeclarationsExpr, ExpressionList, Id, NonEmptyVec, VarDeclaration};
     use crate::il::Statement::Assignment;
 
     use super::*;
@@ -840,6 +860,7 @@ mod tests {
     test_can_all!(arguments, multiple, "(x:integer; y : integer)");
 
     test_can_all!(parameter_list, single, "x:integer");
+    test_can_all!(parameter_list, single_with_multiple_ids, "x,y,z : integer");
     test_can_all!(parameter_list, multiple_2, "x:integer; y : integer");
     test_can_all!(parameter_list, multiple_3, "x:integer; y : integer; z : integer");
 
@@ -853,9 +874,11 @@ mod tests {
     test_can_all!(compound_statement, empty, "begin end");
     test_can_all!(compound_statement, single_assignment, "begin x:=1 end");
     test_can_all!(compound_statement, single_writeln, "begin writeLn('Hello, World!') end");
+    test_can_all!(compound_statement, single_fib, "begin if (n <= 2) then fib:=1 else fib:=fib(n-1)+fib(n-2) end");
     test_can_all!(compound_statement, multiple, "begin x:=1; if x>10 then x:=10 else x:=x end");
 
-    test_can_all!(statement, assignment, "x:=1");
+    test_can_all!(statement, assignment_constant, "x:=1");
+    test_can_all!(statement, assignment_function_call, "x:=fib(n-1)");
     test_can_all!(statement, procedure_statement, "writeLn('Hello, World!')");
     test_can_all!(statement, compound_statement, "begin x:=1;y:=2 end");
     test_can_all!(statement, if_then_else, "if x>10 then x:=10 else x:=x");
@@ -898,9 +921,11 @@ mod tests {
 
     test_can_all!(factor, id, "foo");
     test_can_all!(factor, id_list, "foo(x,y,z)");
+    test_can_all!(factor, id_list_fib, "fib(n-1)");
     test_can_all!(factor, const_num, "42");
     test_can_all!(factor, const_character_string, "'foo'");
-    test_can_all!(factor, parens, "(1)");
+    test_can_all!(factor, parens_of_const, "(1)");
+    test_can_all!(factor, parens_of_expr, "(1+2)");
     test_can_all!(factor, not_id, "not x");
     test_can_all!(factor, not_id_list, "not foo(1,2)");
     test_can_all!(factor, not_num, "not 1");
@@ -965,6 +990,23 @@ mod tests {
         let parsed = PascalParser::parse(Rule::factor, "x").unwrap();
         let actual = il_factor_from(&parsed.into_iter().next().unwrap()).unwrap();
         assert_eq!(il::Factor::id(Id::new_from_str("x").unwrap()), actual);
+    }
+
+    #[test]
+    fn il_factor_from_from_pascal_parser_parse_factor_of_function_call_has_right_type() {
+        let parsed = PascalParser::parse(Rule::factor, "foo(x)").unwrap();
+        let actual = il_factor_from(&parsed.into_iter().next().unwrap()).unwrap();
+
+        assert_eq!(
+            il::Factor::id_with_params(
+                Id::new_from_str("foo").unwrap(),
+                ExpressionList::new(
+                    NonEmptyVec::single(
+                        il::Expression::simple(
+                            il::SimpleExpression::term(
+                                il::Term::factor(
+                                    il::Factor::id(il::Id::new_from_str("x").unwrap()))))))),
+            actual);
     }
 
     #[test]

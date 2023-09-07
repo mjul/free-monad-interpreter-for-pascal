@@ -356,14 +356,25 @@ pub(crate) enum Factor {
 }
 
 impl Factor {
+    /// String factor
     pub(crate) fn string(s: String) -> Self {
         Self::String(s)
     }
+    /// Identifier factor
     pub(crate) fn id(id: Id) -> Self {
         Self::Id(id)
     }
+    /// Function call factor
+    pub(crate) fn id_with_params(id: Id, el: ExpressionList) -> Self {
+        Self::IdWithParams(id, el)
+    }
+    /// Number factor
     pub(crate) fn number(n: i32) -> Self {
         Self::Number(n)
+    }
+    /// Parenthesized expression factor.
+    pub(crate) fn parens(expr: Expression) -> Self {
+        Self::Parens(expr)
     }
 }
 
