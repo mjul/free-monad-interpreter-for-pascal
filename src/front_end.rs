@@ -191,6 +191,7 @@ fn il_subprogram_declarations_from(
     match &pair.as_rule() {
         Rule::subprogram_declarations => {
             dbg!(&pair.as_str(), &pair);
+            // We still have to clone until we change the parsing functions to take ownership of the Pair
             let mut inners = pair.clone().into_inner().into_iter().peekable();
             match inners.peek() {
                 None => Ok(il::SubprogramDeclarations::empty()),
@@ -848,12 +849,26 @@ mod tests {
     test_can_all!(declarations, multiple_decls, "var a : integer; var b: integer;");
 
     test_can_all!(subprogram_declarations, empty, "");
-    test_can_all!(subprogram_declarations, single_function, "function foo: integer; begin end;");
+    test_can_all!(subprogram_declarations, single_function_no_arguments_empty_body, "function foo: integer; begin end;");
+    test_can_all!(subprogram_declarations, single_function_with_arguments_empty_body, "function foo(i:integer): integer; begin end;");
+    test_can_all!(subprogram_declarations, single_function_no_decls_elaborate_body,
+        r#"function fib(n: integer): integer; begin if (n <= 2) then fib := 1 else fib := fib(n-1) + fib(n-2) end;"#);
+    test_can_all!(subprogram_declarations, multiple_functions_no_decls,
+        r#"function foo(n: integer): integer; begin foo:=n end; function bar(n:integer):integer; begin bar:=3 end;"#);
 
     test_can_all!(subprogram_head, function_no_args, "function foo: integer;");
     test_can_all!(subprogram_head, function_with_args, "function foo(x:integer): integer;");
     test_can_all!(subprogram_head, procedure_no_args, "procedure foo;");
     test_can_all!(subprogram_head, procedure_with_args, "procedure foo(x:integer);");
+
+    test_can_all!(subprogram_declaration, function_single_arg,
+        r#"function foo(n: integer): integer; begin foo:=2*n end"#);
+    test_can_all!(subprogram_declaration, function_multiple_args,
+        r#"function sum(a: integer; b: integer): integer; begin sum:=a+b end"#);
+    test_can_all!(subprogram_declaration, procedure_single_arg,
+        r#"procedure foo(n: integer); begin end"#);
+    test_can_all!(subprogram_declaration, procedure_multiple_args,
+        r#"procedure foo(a: integer; b: integer); begin end"#);
 
     test_can_all!(arguments,_empty, "");
     test_can_all!(arguments, single, "(x:integer)");
