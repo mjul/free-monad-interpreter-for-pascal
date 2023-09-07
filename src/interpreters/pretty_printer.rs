@@ -17,10 +17,11 @@ use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
 
 use crate::il::{
-    AssignmentStatement, CompoundStatement, DeclarationsExpr, Expression, ExpressionList, Factor,
-    Id, IdentifierList, IfThenElseStatement, MulOp, NonEmptyVec, ParameterGroup, PascalExpr,
-    ProcedureStatement, RelOp, SimpleExpression, StandardType, Statement, SubprogramDeclaration,
-    SubprogramDeclarations, SubprogramHead, Term, Type, VarDeclaration, Variable, WhileDoStatement,
+    AddOp, AssignmentStatement, CompoundStatement, DeclarationsExpr, Expression, ExpressionList,
+    Factor, Id, IdentifierList, IfThenElseStatement, MulOp, NonEmptyVec, ParameterGroup,
+    PascalExpr, ProcedureStatement, RelOp, Sign, SimpleExpression, StandardType, Statement,
+    SubprogramDeclaration, SubprogramDeclarations, SubprogramHead, Term, Type, VarDeclaration,
+    Variable, WhileDoStatement,
 };
 
 use super::super::il::ProgramExpr;
@@ -749,7 +750,43 @@ where
 {
     match se {
         SimpleExpression::Term(term) => print_program_from_term(term, k),
+        SimpleExpression::SignTerm(sign, term) => {
+            print_program_from_sign(sign, print_program_from_term(term.deref(), k))
+        }
+        SimpleExpression::AddTerm(se, op, t) => print_program_from_simple_expression(
+            se,
+            print_program_from_add_op(op, print_program_from_term(t.deref(), k)),
+        ),
     }
+}
+
+fn print_program_from_sign<TNext>(sign: &Sign, k: PrintProgram<TNext>) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    PrintProgram::write(
+        match sign {
+            Sign::Plus => "+",
+            Sign::Minus => "-",
+        }
+        .to_string(),
+        k,
+    )
+}
+
+fn print_program_from_add_op<TNext>(op: &AddOp, k: PrintProgram<TNext>) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    PrintProgram::write(
+        match op {
+            AddOp::Plus => "+",
+            AddOp::Minus => "-",
+            AddOp::Or => "or",
+        }
+        .to_string(),
+        k,
+    )
 }
 
 fn print_program_from_term<TNext>(t: &Term, k: PrintProgram<TNext>) -> PrintProgram<TNext>
@@ -925,6 +962,28 @@ mod tests {
         let pl = print_program_from_factor(&f, PrintProgram::stop());
         let actual = run_interpreter(&pl);
         assert_eq!("'foo''bar'", actual);
+    }
+
+    #[test]
+    fn print_program_from_simple_expression_add_op_n_minus_1_should_print() {
+        let id = |s| Id::new_from_str(s).unwrap();
+        let se = SimpleExpression::add(
+            SimpleExpression::term(Term::factor(Factor::id(id("n")))),
+            AddOp::Minus,
+            Term::factor(Factor::number(1)),
+        );
+        let pl = print_program_from_simple_expression(&se, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!("n-1", actual);
+    }
+
+    #[test]
+    fn print_program_from_simple_expression_signed_term_should_print() {
+        let id = |s| Id::new_from_str(s).unwrap();
+        let se = SimpleExpression::sign_term(Sign::Minus, Term::factor(Factor::id(id("x"))));
+        let pl = print_program_from_simple_expression(&se, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!("-x", actual);
     }
 
     #[test]

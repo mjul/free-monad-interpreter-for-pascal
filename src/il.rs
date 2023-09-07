@@ -127,7 +127,11 @@ pub(crate) struct SubprogramDeclaration(
 );
 
 impl SubprogramDeclaration {
-    pub(crate) fn new(head: SubprogramHead, decls: DeclarationsExpr, cs: CompoundStatement) -> SubprogramDeclaration {
+    pub(crate) fn new(
+        head: SubprogramHead,
+        decls: DeclarationsExpr,
+        cs: CompoundStatement,
+    ) -> SubprogramDeclaration {
         Self(head, decls, cs)
     }
 }
@@ -155,7 +159,6 @@ impl ParameterGroup {
         Self(ids, ty)
     }
 }
-
 
 /// A compound statement consisting of a `begin` and `end` block containing zero or more statements.
 #[derive(Debug, Clone, PartialEq)]
@@ -324,13 +327,19 @@ pub(crate) enum RelOp {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum SimpleExpression {
     Term(Term),
-    // TODO: SignTerm(Sign, Term),
-    // TODO: AddTerm(SimpleExpression, AddOp, Term),
+    SignTerm(Sign, Term),
+    AddTerm(Box<SimpleExpression>, AddOp, Term),
 }
 
 impl SimpleExpression {
     pub(crate) fn term(term: Term) -> Self {
         Self::Term(term)
+    }
+    pub(crate) fn sign_term(sign: Sign, term: Term) -> Self {
+        Self::SignTerm(sign, term)
+    }
+    pub(crate) fn add(se: SimpleExpression, op: AddOp, term: Term) -> Self {
+        Self::AddTerm(Box::new(se), op, term)
     }
 }
 
@@ -419,7 +428,9 @@ pub(crate) enum TokenError {
 impl Display for TokenError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            TokenError::InvalidIdentifier(id) => write!(f, "Token error - invalid identifier: {}", id),
+            TokenError::InvalidIdentifier(id) => {
+                write!(f, "Token error - invalid identifier: {}", id)
+            }
         }
     }
 }
@@ -478,7 +489,7 @@ mod tests {
                     NonEmptyVec::new(vec![Expression::simple(SimpleExpression::term(
                         Term::factor(Factor::string("Hello, World!".to_string())),
                     ))])
-                        .unwrap(),
+                    .unwrap(),
                 ),
             ))]),
         );
