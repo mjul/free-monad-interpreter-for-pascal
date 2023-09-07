@@ -330,21 +330,6 @@ fn il_compound_statement_from(pair: &Pair<Rule>) -> Result<il::CompoundStatement
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
 }
-/*
-                   let stmts_vec =
-                       optional_statements
-                           .clone()
-                           .into_inner()
-                           .into_iter()
-                           .map(|p| il_statement_list_from(&p))
-                           .collect::<Result<Vec<Vec<il::Statement>>, ConversionError>>()?;
-                   match stmts_vec.len() {
-                       0 => Ok(il::CompoundStatement::new(vec![])),
-                       1 => Ok(il::CompoundStatement::new (stmts_vec[0].to_vec())),
-                       _ => Err(ConversionError::ConversionError("Unexpected number of pairs in optional_statement rule".to_string())),
-                   }
-
-*/
 fn il_statement_list_from_optional_statements(
     pair: &Pair<Rule>,
 ) -> Result<Vec<il::Statement>, ConversionError> {
