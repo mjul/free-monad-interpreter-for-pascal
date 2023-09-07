@@ -148,7 +148,13 @@ impl SubprogramHead {
 }
 
 #[derive(Debug)]
-pub(crate) struct ParameterGroup(IdentifierList, Type);
+pub(crate) struct ParameterGroup(pub(crate) IdentifierList, pub(crate) Type);
+
+impl ParameterGroup {
+    pub(crate) fn new(ids: IdentifierList, ty: Type) -> Self {
+        Self(ids, ty)
+    }
+}
 
 
 /// A compound statement consisting of a `begin` and `end` block containing zero or more statements.
@@ -375,6 +381,10 @@ impl Factor {
     /// Parenthesized expression factor.
     pub(crate) fn parens(expr: Expression) -> Self {
         Self::Parens(expr)
+    }
+    /// Not factor
+    pub(crate) fn not(factor: Factor) -> Self {
+        Self::Not(Box::new(factor))
     }
 }
 

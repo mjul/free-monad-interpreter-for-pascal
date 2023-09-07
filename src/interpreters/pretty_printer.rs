@@ -18,9 +18,9 @@ use std::ops::Deref;
 
 use crate::il::{
     AssignmentStatement, CompoundStatement, DeclarationsExpr, Expression, ExpressionList, Factor,
-    Id, IdentifierList, IfThenElseStatement, MulOp, NonEmptyVec, PascalExpr, ProcedureStatement,
-    RelOp, SimpleExpression, StandardType, Statement, SubprogramDeclaration,
-    SubprogramDeclarations, Term, Type, VarDeclaration, Variable, WhileDoStatement,
+    Id, IdentifierList, IfThenElseStatement, MulOp, NonEmptyVec, ParameterGroup, PascalExpr,
+    ProcedureStatement, RelOp, SimpleExpression, StandardType, Statement, SubprogramDeclaration,
+    SubprogramDeclarations, SubprogramHead, Term, Type, VarDeclaration, Variable, WhileDoStatement,
 };
 
 use super::super::il::ProgramExpr;
@@ -383,14 +383,97 @@ where
 }
 
 fn print_program_from_subprogram_declaration<TNext>(
-    _sd: &SubprogramDeclaration,
+    sd: &SubprogramDeclaration,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
 where
     TNext: Default,
 {
-    todo!("print_program_from_subprogram_declaration");
-    k
+    let SubprogramDeclaration(sp_head, decls, cs) = sd;
+    print_program_from_subprogram_head(
+        sp_head,
+        PrintProgram::write_ln(
+            "".to_string(),
+            print_program_from_declarations(
+                decls,
+                PrintProgram::write_ln(
+                    "".to_string(),
+                    print_program_from_compound_statement(cs, k),
+                ),
+            ),
+        ),
+    )
+}
+
+fn print_program_from_subprogram_head<TNext>(
+    sp_head: &SubprogramHead,
+    k: PrintProgram<TNext>,
+) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    let id_args = |id, arguments, k| {
+        print_program_from_id(
+            id,
+            PrintProgram::write(
+                "(".to_string(),
+                print_program_from_parameter_groups(
+                    arguments,
+                    PrintProgram::write(")".to_string(), k),
+                ),
+            ),
+        )
+    };
+
+    match sp_head {
+        SubprogramHead::Function(id, arguments, standard_type) => PrintProgram::write(
+            "function ".to_string(),
+            id_args(
+                id,
+                arguments,
+                PrintProgram::write(
+                    " : ".to_string(),
+                    print_program_from_standard_type(
+                        standard_type,
+                        PrintProgram::write(";".to_string(), k),
+                    ),
+                ),
+            ),
+        ),
+        SubprogramHead::Procedure(id, arguments) => PrintProgram::write(
+            "procedure ".to_string(),
+            id_args(id, arguments, PrintProgram::write(";".to_string(), k)),
+        ),
+    }
+}
+
+fn print_program_from_parameter_groups<TNext>(
+    pgs: &Vec<ParameterGroup>,
+    k: PrintProgram<TNext>,
+) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    print_program_interpose(
+        pgs,
+        &print_program_from_parameter_group,
+        &|k_ip| PrintProgram::write("; ".to_string(), k_ip),
+        k,
+    )
+}
+
+fn print_program_from_parameter_group<TNext>(
+    pg: &ParameterGroup,
+    k: PrintProgram<TNext>,
+) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    let ParameterGroup(il, ty) = pg;
+    print_program_from_identifier_list(
+        il,
+        PrintProgram::write(" : ".to_string(), print_program_from_type(ty, k)),
+    )
 }
 
 fn print_program_from_compound_statement<TNext>(
@@ -844,6 +927,102 @@ mod tests {
         assert_eq!("'foo''bar'", actual);
     }
 
+    #[test]
+    fn print_program_from_subprogram_head_function_should_print() {
+        let sp_head = SubprogramHead::function(
+            Id::new_from_str("foo").unwrap(),
+            vec![ParameterGroup::new(
+                IdentifierList::new(
+                    NonEmptyVec::new(vec![
+                        Id::new_from_str("x").unwrap(),
+                        Id::new_from_str("y").unwrap(),
+                    ])
+                    .unwrap(),
+                ),
+                Type::standard(StandardType::Integer),
+            )],
+            StandardType::Integer,
+        );
+        let pl = print_program_from_subprogram_head(&sp_head, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!("function foo(x, y : integer) : integer;", actual);
+    }
+
+    #[test]
+    fn print_program_from_subprogram_head_procedure_should_print() {
+        let sp_head = SubprogramHead::procedure(
+            Id::new_from_str("foo").unwrap(),
+            vec![ParameterGroup::new(
+                IdentifierList::new(
+                    NonEmptyVec::new(vec![Id::new_from_str("x").unwrap()]).unwrap(),
+                ),
+                Type::standard(StandardType::Integer),
+            )],
+        );
+        let pl = print_program_from_subprogram_head(&sp_head, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!("procedure foo(x : integer);", actual);
+    }
+
+    #[test]
+    fn print_program_from_parameter_groups_single_group_should_print() {
+        let pgs = vec![ParameterGroup::new(
+            IdentifierList::new(NonEmptyVec::new(vec![Id::new_from_str("x").unwrap()]).unwrap()),
+            Type::standard(StandardType::Integer),
+        )];
+        let pl = print_program_from_parameter_groups(&pgs, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!("x : integer", actual);
+    }
+
+    #[test]
+    fn print_program_from_parameter_groups_multiple_groups_should_print() {
+        let pgs = vec![
+            ParameterGroup::new(
+                IdentifierList::new(
+                    NonEmptyVec::new(vec![Id::new_from_str("x").unwrap()]).unwrap(),
+                ),
+                Type::standard(StandardType::Integer),
+            ),
+            ParameterGroup::new(
+                IdentifierList::new(
+                    NonEmptyVec::new(vec![Id::new_from_str("y").unwrap()]).unwrap(),
+                ),
+                Type::standard(StandardType::Integer),
+            ),
+        ];
+        let pl = print_program_from_parameter_groups(&pgs, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!("x : integer; y : integer", actual);
+    }
+
+    #[test]
+    fn print_program_from_parameter_group_single_group_single_ident_should_print() {
+        let pg = ParameterGroup::new(
+            IdentifierList::new(NonEmptyVec::new(vec![Id::new_from_str("x").unwrap()]).unwrap()),
+            Type::standard(StandardType::Integer),
+        );
+        let pl = print_program_from_parameter_group(&pg, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!("x : integer", actual);
+    }
+
+    #[test]
+    fn print_program_from_parameter_group_single_group_multiple_idents_should_print() {
+        let pg = ParameterGroup::new(
+            IdentifierList::new(
+                NonEmptyVec::new(vec![
+                    Id::new_from_str("x").unwrap(),
+                    Id::new_from_str("y").unwrap(),
+                ])
+                .unwrap(),
+            ),
+            Type::standard(StandardType::Integer),
+        );
+        let pl = print_program_from_parameter_group(&pg, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!("x, y : integer", actual);
+    }
 
     #[test]
     fn pretty_print_hello_world() {
