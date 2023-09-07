@@ -700,7 +700,7 @@ where
 {
     match f {
         Factor::Id(id) => print_program_from_id(id, k),
-        Factor::IdWithParams(_, _) => todo!(),
+        Factor::IdWithParams(id, el) => print_program_from_id_with_params(id, el, k),
         Factor::Number(n) => PrintProgram::write(n.to_string(), k),
         Factor::Parens(_) => todo!(),
         Factor::Not(_) => todo!(),
@@ -751,6 +751,23 @@ where
     )
 }
 
+fn print_program_from_id_with_params<TNext>(
+    id: &Id,
+    el: &ExpressionList,
+    k: PrintProgram<TNext>,
+) -> PrintProgram<TNext>
+where
+    TNext: Default,
+{
+    print_program_from_id(
+        id,
+        PrintProgram::write(
+            "(".to_string(),
+            print_program_from_expression_list(el, PrintProgram::write(")".to_string(), k)),
+        ),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use crate::examples;
@@ -771,7 +788,7 @@ mod tests {
         assert_eq!("x", actual);
     }
 
-    #[test, ignore]
+    #[test]
     fn print_program_from_factor_id_with_params() {
         let f = Factor::id_with_params(
             Id::new_from_str("foo").unwrap(),
