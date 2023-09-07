@@ -702,8 +702,14 @@ where
         Factor::Id(id) => print_program_from_id(id, k),
         Factor::IdWithParams(id, el) => print_program_from_id_with_params(id, el, k),
         Factor::Number(n) => PrintProgram::write(n.to_string(), k),
-        Factor::Parens(_) => todo!(),
-        Factor::Not(_) => todo!(),
+        Factor::Parens(expr) => PrintProgram::write(
+            "(".to_string(),
+            print_program_from_expression(expr.deref(), PrintProgram::write(")".to_string(), k)),
+        ),
+        Factor::Not(f_box) => PrintProgram::write(
+            "not ".to_string(),
+            print_program_from_factor(f_box.deref(), k),
+        ),
         Factor::String(s) => print_program_from_string_literal(s, k),
     }
 }
@@ -812,7 +818,7 @@ mod tests {
         assert_eq!("42", actual);
     }
 
-    #[test, ignore]
+    #[test]
     fn print_program_from_factor_parens() {
         let f = Factor::parens(Expression::simple(SimpleExpression::term(Term::factor(
             Factor::id(Id::new_from_str("x").unwrap()),
@@ -822,7 +828,7 @@ mod tests {
         assert_eq!("(x)", actual);
     }
 
-    #[test, ignore]
+    #[test]
     fn print_program_from_factor_not() {
         let f = Factor::not(Factor::id(Id::new_from_str("x").unwrap()));
         let pl = print_program_from_factor(&f, PrintProgram::stop());
