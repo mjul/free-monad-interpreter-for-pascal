@@ -800,9 +800,6 @@ mod tests {
     use paste::paste;
     use pest::iterators::Pairs;
 
-    use crate::il::{CompoundStatement, DeclarationsExpr, ExpressionList, Id, NonEmptyVec, VarDeclaration};
-    use crate::il::Statement::Assignment;
-
     use super::*;
 
     #[test]
@@ -1013,7 +1010,7 @@ mod tests {
     fn il_factor_from_from_pascal_parser_parse_factor_of_identifier_has_right_type() {
         let parsed = PascalParser::parse(Rule::factor, "x").unwrap();
         let actual = il_factor_from(&parsed.into_iter().next().unwrap()).unwrap();
-        assert_eq!(il::Factor::id(Id::new_from_str("x").unwrap()), actual);
+        assert_eq!(il::Factor::id(il::Id::new_from_str("x").unwrap()), actual);
     }
 
     #[test]
@@ -1023,24 +1020,23 @@ mod tests {
 
         assert_eq!(
             il::Factor::id_with_params(
-                Id::new_from_str("foo").unwrap(),
-                ExpressionList::new(
-                    NonEmptyVec::single(
-                        il::Expression::simple(
-                            il::SimpleExpression::term(
-                                il::Term::factor(
-                                    il::Factor::id(il::Id::new_from_str("x").unwrap()))))))),
-            actual);
+                il::Id::new_from_str("foo").unwrap(),
+                il::ExpressionList::new(il::NonEmptyVec::single(il::Expression::simple(
+                    il::SimpleExpression::term(il::Term::factor(il::Factor::id(
+                        il::Id::new_from_str("x").unwrap()
+                    )))
+                ))),
+            ),
+            actual
+        );
     }
 
-    #[ignore]
     #[test]
     fn il_simple_expression_from_from_pascal_parser_parse_sign_term() {
         let minus_x = il::SimpleExpression::sign_term(
             il::Sign::Minus,
-            il::Term::factor(il::Factor::id(
-                Id::new_from_str("x").unwrap()
-            )));
+            il::Term::factor(il::Factor::id(il::Id::new_from_str("x").unwrap())),
+        );
 
         let parsed = PascalParser::parse(Rule::simple_expression, "-x").unwrap();
         let actual = il_simple_expression_from(&parsed.into_iter().next().unwrap()).unwrap();
@@ -1048,20 +1044,18 @@ mod tests {
         assert_eq!(minus_x, actual);
     }
 
-    #[ignore]
     #[test]
     fn il_simple_expression_from_from_pascal_parser_parse_addop_term_n_minus_1() {
         // n-1
         let n_minus_1 = il::SimpleExpression::add(
             il::SimpleExpression::term(il::Term::factor(il::Factor::id(
-                Id::new_from_str("n").unwrap(),
+                il::Id::new_from_str("n").unwrap(),
             ))),
             il::AddOp::Minus,
-            il::Term::factor(il::Factor::number(1)),
+            il::SimpleExpression::term(il::Term::factor(il::Factor::number(1))),
         );
 
         let parsed = PascalParser::parse(Rule::simple_expression, "n-1").unwrap();
-        dbg!(&parsed);
         let actual = il_simple_expression_from(&parsed.into_iter().next().unwrap()).unwrap();
 
         assert_eq!(n_minus_1, actual);
@@ -1119,15 +1113,15 @@ mod tests {
         // Just a smoke test for now (parsing not failing is already a good sign)
         assert_eq!(il::Id::new_from_str("fizzbuzz").unwrap(), actual.id);
         assert_eq!(DeclarationsExpr::new(vec![
-            VarDeclaration::new(
+            il::VarDeclaration::new(
                 il::IdentifierList::new(
                     il::NonEmptyVec::single(il::Id::new_from_str("i").unwrap())),
                 il::Type::standard(il::StandardType::Integer)),
         ]), actual.declarations);
 
-        let CompoundStatement(stmts) = actual.compound_statement;
+        let il::CompoundStatement(stmts) = actual.compound_statement;
 
-        assert_eq!(Assignment(il::AssignmentStatement::new(
+        assert_eq!(il::Statement::assignment(il::AssignmentStatement::new(
             il::Variable::id(il::Id::new_from_str("i").unwrap()),
             il::Expression::simple(il::SimpleExpression::term(il::Term::factor(il::Factor::number(1)))))),
                    stmts[0]);
