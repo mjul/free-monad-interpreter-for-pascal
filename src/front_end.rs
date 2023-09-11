@@ -1009,6 +1009,41 @@ mod tests {
             actual);
     }
 
+    #[ignore]
+    #[test]
+    fn il_simple_expression_from_from_pascal_parser_parse_sign_term() {
+        let minus_x = il::SimpleExpression::sign_term(
+            il::Sign::Minus,
+            il::Term::factor(il::Factor::id(
+                Id::new_from_str("x").unwrap()
+            )));
+
+        let parsed = PascalParser::parse(Rule::simple_expression, "-x").unwrap();
+        let actual = il_simple_expression_from(&parsed.into_iter().next().unwrap()).unwrap();
+
+        assert_eq!(minus_x, actual);
+    }
+
+    #[ignore]
+    #[test]
+    fn il_simple_expression_from_from_pascal_parser_parse_addop_term_n_minus_1() {
+        // n-1
+        let n_minus_1 = il::SimpleExpression::add(
+            il::SimpleExpression::term(il::Term::factor(il::Factor::id(
+                Id::new_from_str("n").unwrap(),
+            ))),
+            il::AddOp::Minus,
+            il::Term::factor(il::Factor::number(1)),
+        );
+
+        let parsed = PascalParser::parse(Rule::simple_expression, "n-1").unwrap();
+        dbg!(&parsed);
+        let actual = il_simple_expression_from(&parsed.into_iter().next().unwrap()).unwrap();
+
+        assert_eq!(n_minus_1, actual);
+    }
+
+
     #[test]
     fn parse_program_string_hello_world_returns_valid_il() {
         let actual = parse_program_string(r#"program helloWorld(output);begin writeLn('Hello, World!') end."#).unwrap();
