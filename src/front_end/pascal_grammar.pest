@@ -107,7 +107,7 @@ STRING_LITERAL = @{
     ~ APOSTROPHE)
 }
 
-ADDOP = { PLUS | MINUS } // TODO: "OR" is not yet supported
+ADDOP = { PLUS | MINUS | OR }
 
 // Notice how we have to write this in the order of the longest tokens first
 // since the `<` and `>` tokens are prefixes of the `<=` and `>=` tokens,

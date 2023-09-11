@@ -963,10 +963,11 @@ mod tests {
     test_can_all!(simple_expression, add_op_1, "x + y");
     test_can_all!(simple_expression, add_op_2, "-x + y - z");
     test_can_all!(simple_expression, add_op_plus_and_minus, "fib(n-1)+fib(n-2)");
+    test_can_all!(simple_expression, add_op_or, "x OR y");
 
     test_can_all!(ADDOP, plus, "+");
     test_can_all!(ADDOP, minus, "-");
-    // OR not implemented yet
+    test_can_all!(ADDOP, or, "or");
 
     test_can_all!(term, factor, "x");
     test_can_all!(term, mulop_single, "2*x");
