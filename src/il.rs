@@ -328,7 +328,7 @@ pub(crate) enum RelOp {
 pub(crate) enum SimpleExpression {
     Term(Term),
     SignTerm(Sign, Term),
-    AddTerm(Box<SimpleExpression>, AddOp, Term),
+    AddTerm(Box<SimpleExpression>, AddOp, Box<SimpleExpression>),
 }
 
 impl SimpleExpression {
@@ -338,8 +338,9 @@ impl SimpleExpression {
     pub(crate) fn sign_term(sign: Sign, term: Term) -> Self {
         Self::SignTerm(sign, term)
     }
-    pub(crate) fn add(se: SimpleExpression, op: AddOp, term: Term) -> Self {
-        Self::AddTerm(Box::new(se), op, term)
+    pub(crate) fn add(lhs: SimpleExpression, op: AddOp, rhs: SimpleExpression) -> Self {
+        Self::AddTerm(Box::new(lhs), op,
+                      Box::new(rhs))
     }
 }
 

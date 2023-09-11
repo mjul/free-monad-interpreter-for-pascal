@@ -320,7 +320,7 @@ fn il_parameter_groups_from_parameter_list(pair: &Pair<Rule>) -> Result<Vec<Para
                                 break;
                             }
                         }
-                    }
+                    },
                     _ => {
                         error = Err(ConversionError::ConversionError(format!("il_parameter_groups_from_parameter_list: invalid segment start in pair: {:?} next {:}", pair, nxt)));
                         break;
@@ -565,7 +565,7 @@ fn il_simple_expression_from(pair: &Pair<Rule>) -> Result<il::SimpleExpression, 
             let first_inner = inners.next().ok_or(ConversionError::ConversionError(
                 "Unexpected empty simple_expression".to_string(),
             ))?;
-            match &first_inner.as_rule() {
+            let first_expr = match &first_inner.as_rule() {
                 Rule::term => {
                     // term
                     let t = il_term_from(&first_inner)?;
@@ -577,9 +577,43 @@ fn il_simple_expression_from(pair: &Pair<Rule>) -> Result<il::SimpleExpression, 
                     let next2 = inners.next().ok_or(ConversionError::ConversionError(
                         "Missing term after sign".to_string(),
                     ))?;
-                    let _t = il_term_from(&next2)?;
-                    todo!("il_simple_expression_from: sign term: {:?}", s);
+                    let t = il_term_from(&next2)?;
+                    Ok(il::SimpleExpression::sign_term(s, t))
                 }
+                _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
+            }?;
+            let next_inner = inners.peek();
+            match next_inner.map(|p| p.as_rule()) {
+                Some(Rule::ADDOP) => {
+                    // term addop simple_expression
+                    let addop = il_addop_from(&inners.next().unwrap())?;
+                    let pair_after_addop = inners.next().ok_or(ConversionError::ConversionError(
+                        "Missing simple_expression after addop".to_string(),
+                    ))?;
+                    let second_expr = il_simple_expression_from(&pair_after_addop)?;
+                    Ok(il::SimpleExpression::add(first_expr, addop, second_expr))
+                }
+                None => Ok(first_expr),
+                _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
+            }
+        }
+        _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
+    }
+}
+
+fn il_addop_from(pair: &Pair<Rule>) -> Result<il::AddOp, ConversionError> {
+    match &pair.as_rule() {
+        Rule::ADDOP => {
+            let inner_rules: Vec<Rule> = pair
+                .clone()
+                .into_inner()
+                .into_iter()
+                .map(|p| p.as_rule())
+                .collect();
+            match &inner_rules[..] {
+                [Rule::PLUS] => Ok(il::AddOp::Plus),
+                [Rule::MINUS] => Ok(il::AddOp::Minus),
+                // TODO: [Rule::OR] => Ok(il::AddOp::Or),
                 _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
             }
         }
@@ -929,6 +963,10 @@ mod tests {
     test_can_all!(simple_expression, add_op_1, "x + y");
     test_can_all!(simple_expression, add_op_2, "-x + y - z");
     test_can_all!(simple_expression, add_op_plus_and_minus, "fib(n-1)+fib(n-2)");
+
+    test_can_all!(ADDOP, plus, "+");
+    test_can_all!(ADDOP, minus, "-");
+    // OR not implemented yet
 
     test_can_all!(term, factor, "x");
     test_can_all!(term, mulop_single, "2*x");
