@@ -302,11 +302,32 @@ fn il_parameter_groups_from_parameter_list(pair: &Pair<Rule>) -> Result<Vec<Para
                 .into_inner()
                 .into_iter()
                 .peekable();
-            let mut result = vec![];
-            while let Some(p) = inners.next() {
-                todo!("il_parameter_groups_from_parameter_list: {:?}", p.as_rule());
+            let mut pgs = vec![];
+            let mut error = Ok(());
+            while let Some(nxt) = inners.peek() {
+                match nxt.as_rule() {
+                    Rule::SEMICOLON => { inners.next(); }
+                    Rule::identifier_list => {
+                        match (inners.next(), inners.next(), inners.next()) {
+                            (Some(identifier_list), Some(_colon), Some(ty)) => {
+                                let ids = il_identifier_list_from(&identifier_list)?;
+                                let ty = il_type_from(&ty)?;
+                                let pg = ParameterGroup::new(ids, ty);
+                                pgs.push(pg);
+                            }
+                            _ => {
+                                error = Err(ConversionError::ConversionError(format!("il_parameter_groups_from_parameter_list: invalid identifier_list segment in pair: {:?} inners: {:?}", pair, inners)));
+                                break;
+                            }
+                        }
+                    }
+                    _ => {
+                        error = Err(ConversionError::ConversionError(format!("il_parameter_groups_from_parameter_list: invalid segment start in pair: {:?} next {:}", pair, nxt)));
+                        break;
+                    }
+                }
             }
-            Ok(result)
+            error.map(|_| pgs)
         }
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
