@@ -743,8 +743,8 @@ where
 
 // Print a space and continue with the continuation `k`
 fn print_program_space<TNext>(k: PrintProgram<TNext>) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     PrintProgram::write(" ".to_string(), k)
 }
@@ -753,23 +753,21 @@ fn print_program_from_simple_expression<TNext>(
     se: &SimpleExpression,
     k: PrintProgram<TNext>,
 ) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match se {
         SimpleExpression::Term(term) => print_program_from_term(term, k),
         SimpleExpression::SignTerm(sign, term) => {
             print_program_from_sign(sign, print_program_from_term(term.deref(), k))
         }
-        SimpleExpression::AddTerm(se, op, t) =>
-            print_program_from_simple_expression(
-                se,
-                print_program_space(
-                    print_program_from_add_op(
-                        op,
-                        print_program_space(
-                            print_program_from_term(t.deref(), k)),
-                    ))),
+        SimpleExpression::AddTerm(se, op, t) => print_program_from_simple_expression(
+            se,
+            print_program_space(print_program_from_add_op(
+                op,
+                print_program_space(print_program_from_term(t.deref(), k)),
+            )),
+        ),
     }
 }
 
@@ -987,7 +985,7 @@ mod tests {
         );
         let pl = print_program_from_simple_expression(&se, PrintProgram::stop());
         let actual = run_interpreter(&pl);
-        assert_eq!("n-1", actual);
+        assert_eq!("n - 1", actual);
     }
 
     #[test]
@@ -1098,23 +1096,21 @@ mod tests {
 
     #[test]
     fn print_program_from_simple_expression_with_addition_should_print() {
-        let factor_fib_n_minus = |i|
+        let factor_fib_n_minus = |i| {
             Term::factor(Factor::id_with_params(
                 Id::new_from_str("fib").unwrap(),
                 ExpressionList::new(
-                    NonEmptyVec::new(vec![Expression::simple(
-                        SimpleExpression::add(
-                            SimpleExpression::term(Term::factor(Factor::id(Id::new_from_str(
-                                "n",
-                            )
-                                .unwrap()))),
-                            AddOp::Minus,
-                            Term::factor(Factor::number(i)),
-                        ),
-                    )])
-                        .unwrap(),
+                    NonEmptyVec::new(vec![Expression::simple(SimpleExpression::add(
+                        SimpleExpression::term(Term::factor(Factor::id(
+                            Id::new_from_str("n").unwrap(),
+                        ))),
+                        AddOp::Minus,
+                        Term::factor(Factor::number(i)),
+                    ))])
+                    .unwrap(),
                 ),
-            ));
+            ))
+        };
         // fib(n-1)+fib(n-2)
         let se = SimpleExpression::add(
             SimpleExpression::term(factor_fib_n_minus(1)),
