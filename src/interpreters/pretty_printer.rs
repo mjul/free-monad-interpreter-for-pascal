@@ -567,8 +567,7 @@ fn print_program_from_statement<TNext>(
     match stmt {
         Statement::Assignment(asn) => print_program_from_assignment_statement(asn, k),
         Statement::Procedure(ps) => print_program_from_procedure_statement(ps, k),
-        // TODO: print_program_from_compound_statement
-        Statement::Compound(cs) => PrintProgram::write("{ compound }".to_string(), k),
+        Statement::Compound(cs) => print_program_from_compound_statement(cs, k),
         Statement::IfThenElse(ites) => print_program_from_if_then_else_statement(ites, k),
         Statement::WhileDo(wds) => print_program_from_while_do_statement(wds, k),
     }
@@ -1127,6 +1126,30 @@ mod tests {
             )),
         ]);
         let pl = print_program_from_compound_statement(&cs, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!(r#"
+begin
+  x := 1;
+  y := 2
+end
+"#.trim(),
+                   actual);
+    }
+
+    #[test]
+    fn print_program_from_statement_with_compound_statement_should_print() {
+        let cs = CompoundStatement::new(vec![
+            Statement::assignment(AssignmentStatement::new(
+                Variable::id(Id::new_from_str("x").unwrap()),
+                Expression::simple(SimpleExpression::term(Term::factor(Factor::number(1)))),
+            )),
+            Statement::assignment(AssignmentStatement::new(
+                Variable::id(Id::new_from_str("y").unwrap()),
+                Expression::simple(SimpleExpression::term(Term::factor(Factor::number(2)))),
+            )),
+        ]);
+        let stmt = Statement::compound(cs);
+        let pl = print_program_from_statement(&stmt, PrintProgram::stop());
         let actual = run_interpreter(&pl);
         assert_eq!(r#"
 begin
