@@ -205,9 +205,7 @@ fn il_subprogram_declarations_from(
                             }
                             Rule::SEMICOLON => { /* ignore terminators */ }
                             _ => {
-                                return Err(ConversionError::UnexpectedRuleInPair(
-                                    p.as_rule(),
-                                ));
+                                return Err(ConversionError::UnexpectedRuleInPair(p.as_rule()));
                             }
                         }
                     }
@@ -219,7 +217,9 @@ fn il_subprogram_declarations_from(
     }
 }
 
-fn il_subprogram_declaration_from(pair: &Pair<Rule>) -> Result<il::SubprogramDeclaration, ConversionError> {
+fn il_subprogram_declaration_from(
+    pair: &Pair<Rule>,
+) -> Result<il::SubprogramDeclaration, ConversionError> {
     // Another non-cloning strategy, using .next() without peeking
     // We still have to clone to be consistent with the other functions that all borrow the Pair.
     // If we refactor to taking ownership of the Pair, we can avoid cloning, but the we should do it for
@@ -234,7 +234,9 @@ fn il_subprogram_declaration_from(pair: &Pair<Rule>) -> Result<il::SubprogramDec
                     let cs = il_compound_statement_from(&compound_statement)?;
                     Ok(il::SubprogramDeclaration::new(sh, ds, cs))
                 }
-                _ => Err(ConversionError::ConversionError("Unexpected inner pairs under subprogram_declaration rule".to_string())),
+                _ => Err(ConversionError::ConversionError(
+                    "Unexpected inner pairs under subprogram_declaration rule".to_string(),
+                )),
             }
         }
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
@@ -258,7 +260,9 @@ fn il_subprogram_head_from(pair: &Pair<Rule>) -> Result<SubprogramHead, Conversi
                     let params = il_parameter_groups_from_arguments(&arguments)?;
                     Ok(SubprogramHead::procedure(id, params))
                 }
-                _ => Err(ConversionError::ConversionError("Unexpected inner pairs under subprogram_head rule".to_string())),
+                _ => Err(ConversionError::ConversionError(
+                    "Unexpected inner pairs under subprogram_head rule".to_string(),
+                )),
             }
         }
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
@@ -266,7 +270,9 @@ fn il_subprogram_head_from(pair: &Pair<Rule>) -> Result<SubprogramHead, Conversi
 }
 
 /// This reads the arguments into a possibly empty vector of [ParameterGroup]s.
-fn il_parameter_groups_from_arguments(pair: &Pair<Rule>) -> Result<Vec<ParameterGroup>, ConversionError> {
+fn il_parameter_groups_from_arguments(
+    pair: &Pair<Rule>,
+) -> Result<Vec<ParameterGroup>, ConversionError> {
     match &pair.as_rule() {
         Rule::arguments => {
             // The production: arguments -> ( parameter_list ) | epsilon
@@ -282,10 +288,16 @@ fn il_parameter_groups_from_arguments(pair: &Pair<Rule>) -> Result<Vec<Parameter
                             let params = il_parameter_groups_from_parameter_list(&pl)?;
                             Ok(params)
                         }
-                        _ => Err(ConversionError::ConversionError(format!("Unexpected inner pairs under arguments rule: {:?}", pair))),
+                        _ => Err(ConversionError::ConversionError(format!(
+                            "Unexpected inner pairs under arguments rule: {:?}",
+                            pair
+                        ))),
                     }
                 }
-                _ => Err(ConversionError::ConversionError(format!("Unexpected inner pairs under arguments rule: {:?}", pair))),
+                _ => Err(ConversionError::ConversionError(format!(
+                    "Unexpected inner pairs under arguments rule: {:?}",
+                    pair
+                ))),
             }
         }
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
@@ -293,32 +305,30 @@ fn il_parameter_groups_from_arguments(pair: &Pair<Rule>) -> Result<Vec<Parameter
 }
 
 /// This reads the arguments into a possibly empty vector of [ParameterGroup]s.
-fn il_parameter_groups_from_parameter_list(pair: &Pair<Rule>) -> Result<Vec<ParameterGroup>, ConversionError> {
+fn il_parameter_groups_from_parameter_list(
+    pair: &Pair<Rule>,
+) -> Result<Vec<ParameterGroup>, ConversionError> {
     match &pair.as_rule() {
         // Cloning is necessary since we have only borrowed the Pair
         Rule::parameter_list => {
-            let mut inners = pair
-                .clone()
-                .into_inner()
-                .into_iter()
-                .peekable();
+            let mut inners = pair.clone().into_inner().into_iter().peekable();
             let mut pgs = vec![];
             let mut error = Ok(());
             while let Some(nxt) = inners.peek() {
                 match nxt.as_rule() {
-                    Rule::SEMICOLON => { inners.next(); }
-                    Rule::identifier_list => {
-                        match (inners.next(), inners.next(), inners.next()) {
-                            (Some(identifier_list), Some(_colon), Some(ty)) => {
-                                let ids = il_identifier_list_from(&identifier_list)?;
-                                let ty = il_type_from(&ty)?;
-                                let pg = ParameterGroup::new(ids, ty);
-                                pgs.push(pg);
-                            }
-                            _ => {
-                                error = Err(ConversionError::ConversionError(format!("il_parameter_groups_from_parameter_list: invalid identifier_list segment in pair: {:?} inners: {:?}", pair, inners)));
-                                break;
-                            }
+                    Rule::SEMICOLON => {
+                        inners.next();
+                    }
+                    Rule::identifier_list => match (inners.next(), inners.next(), inners.next()) {
+                        (Some(identifier_list), Some(_colon), Some(ty)) => {
+                            let ids = il_identifier_list_from(&identifier_list)?;
+                            let ty = il_type_from(&ty)?;
+                            let pg = ParameterGroup::new(ids, ty);
+                            pgs.push(pg);
+                        }
+                        _ => {
+                            error = Err(ConversionError::ConversionError(format!("il_parameter_groups_from_parameter_list: invalid identifier_list segment in pair: {:?} inners: {:?}", pair, inners)));
+                            break;
                         }
                     },
                     _ => {
@@ -332,7 +342,6 @@ fn il_parameter_groups_from_parameter_list(pair: &Pair<Rule>) -> Result<Vec<Para
         _ => Err(ConversionError::UnexpectedRuleInPair(pair.as_rule())),
     }
 }
-
 
 fn il_compound_statement_from(pair: &Pair<Rule>) -> Result<il::CompoundStatement, ConversionError> {
     match &pair.as_rule() {
@@ -587,9 +596,10 @@ fn il_simple_expression_from(pair: &Pair<Rule>) -> Result<il::SimpleExpression, 
                 Some(Rule::ADDOP) => {
                     // term addop simple_expression
                     let addop = il_addop_from(&inners.next().unwrap())?;
-                    let pair_after_addop = inners.next().ok_or(ConversionError::ConversionError(
-                        "Missing simple_expression after addop".to_string(),
-                    ))?;
+                    let pair_after_addop =
+                        inners.next().ok_or(ConversionError::ConversionError(
+                            "Missing simple_expression after addop".to_string(),
+                        ))?;
                     let second_expr = il_simple_expression_from(&pair_after_addop)?;
                     Ok(il::SimpleExpression::add(first_expr, addop, second_expr))
                 }
@@ -673,53 +683,57 @@ fn il_factor_from(pair: &Pair<Rule>) -> Result<il::Factor, ConversionError> {
                 .into_iter()
                 .collect::<Vec<Pair<Rule>>>();
             match &inners[..] {
-                [p] => {
-                    match p.as_rule() {
-                        Rule::IDENT => {
-                            let id = il_id_from(&p)?;
-                            Ok(il::Factor::id(id))
-                        }
-                        Rule::unsigned_constant => {
-                            let inners = p.clone().into_inner().collect::<Vec<Pair<Rule>>>();
-                            match &inners[..] {
-                                [p] => match p.as_rule() {
-                                    Rule::unsigned_number => {
-                                        let n = p.as_str().parse::<i32>().map_err(|e| {
-                                            ConversionError::ConversionError(format!(
-                                                "Failed to parse unsigned_number: {}",
-                                                e
-                                            ))
-                                        })?;
-                                        Ok(il::Factor::number(n))
-                                    }
-                                    Rule::character_string => {
-                                        let inners = p.clone().into_inner().collect::<Vec<Pair<Rule>>>();
-                                        match &inners[..] {
-                                            [p] => match p.as_rule() {
-                                                Rule::STRING_LITERAL => {
-                                                    let s = string_from_string_literal(p)?;
-                                                    Ok(il::Factor::string(s))
-                                                }
-                                                _ => Err(ConversionError::UnexpectedRuleInPair(p.as_rule())),
-                                            },
-                                            _ => unimplemented!("il_factor_from: character_string: {:?}", inners),
-                                        }
-                                    }
-                                    _ => Err(ConversionError::UnexpectedRuleInPair(p.as_rule())),
-                                },
-                                _ => todo!("il_factor_from: unsigned_constant from: {:?}", p),
-                            }
-                        }
-                        _ => Err(ConversionError::UnexpectedRuleInPair(p.as_rule()))
+                [p] => match p.as_rule() {
+                    Rule::IDENT => {
+                        let id = il_id_from(&p)?;
+                        Ok(il::Factor::id(id))
                     }
-                }
+                    Rule::unsigned_constant => {
+                        let inners = p.clone().into_inner().collect::<Vec<Pair<Rule>>>();
+                        match &inners[..] {
+                            [p] => match p.as_rule() {
+                                Rule::unsigned_number => {
+                                    let n = p.as_str().parse::<i32>().map_err(|e| {
+                                        ConversionError::ConversionError(format!(
+                                            "Failed to parse unsigned_number: {}",
+                                            e
+                                        ))
+                                    })?;
+                                    Ok(il::Factor::number(n))
+                                }
+                                Rule::character_string => {
+                                    let inners =
+                                        p.clone().into_inner().collect::<Vec<Pair<Rule>>>();
+                                    match &inners[..] {
+                                        [p] => match p.as_rule() {
+                                            Rule::STRING_LITERAL => {
+                                                let s = string_from_string_literal(p)?;
+                                                Ok(il::Factor::string(s))
+                                            }
+                                            _ => Err(ConversionError::UnexpectedRuleInPair(
+                                                p.as_rule(),
+                                            )),
+                                        },
+                                        _ => unimplemented!(
+                                            "il_factor_from: character_string: {:?}",
+                                            inners
+                                        ),
+                                    }
+                                }
+                                _ => Err(ConversionError::UnexpectedRuleInPair(p.as_rule())),
+                            },
+                            _ => todo!("il_factor_from: unsigned_constant from: {:?}", p),
+                        }
+                    }
+                    _ => Err(ConversionError::UnexpectedRuleInPair(p.as_rule())),
+                },
                 [lparen, expr, rparen] => {
                     match (lparen.as_rule(), expr.as_rule(), rparen.as_rule()) {
                         (Rule::LPAREN, Rule::expression, Rule::RPAREN) => {
                             let e = il_expression_from(expr)?;
                             Ok(il::Factor::parens(e))
                         }
-                        _ => Err(ConversionError::UnexpectedRuleInPair(lparen.as_rule()))
+                        _ => Err(ConversionError::UnexpectedRuleInPair(lparen.as_rule())),
                     }
                 }
                 [ident, lparen, expr_list, rparen] => {
@@ -729,7 +743,7 @@ fn il_factor_from(pair: &Pair<Rule>) -> Result<il::Factor, ConversionError> {
                             let el = il_expression_list_from(expr_list)?;
                             Ok(il::Factor::id_with_params(id, el))
                         }
-                        _ => Err(ConversionError::UnexpectedRuleInPair(lparen.as_rule()))
+                        _ => Err(ConversionError::UnexpectedRuleInPair(lparen.as_rule())),
                     }
                 }
                 // TODO: not factor is missing (two inners)
@@ -784,21 +798,21 @@ fn il_program_from(pair: Pair<Rule>) -> Result<il::ProgramExpr, ConversionError>
             let inners: Vec<Pair<Rule>> = pair.into_inner().into_iter().collect();
             match &inners[..] {
                 [_program, id, _lparen, identifier_list, _rparen, _semicolon, declarations, subprogram_declarations, compound_statement, ..] =>
-                    {
-                        let id = il_id_from(&id)?;
-                        let identifier_list = il_identifier_list_from(identifier_list)?;
-                        let declarations = il_declarations_from(declarations)?;
-                        let subprogram_declarations =
-                            il_subprogram_declarations_from(subprogram_declarations)?;
-                        let compound_statement = il_compound_statement_from(compound_statement)?;
-                        Ok(il::ProgramExpr::new(
-                            id,
-                            identifier_list,
-                            declarations,
-                            subprogram_declarations,
-                            compound_statement,
-                        ))
-                    }
+                {
+                    let id = il_id_from(&id)?;
+                    let identifier_list = il_identifier_list_from(identifier_list)?;
+                    let declarations = il_declarations_from(declarations)?;
+                    let subprogram_declarations =
+                        il_subprogram_declarations_from(subprogram_declarations)?;
+                    let compound_statement = il_compound_statement_from(compound_statement)?;
+                    Ok(il::ProgramExpr::new(
+                        id,
+                        identifier_list,
+                        declarations,
+                        subprogram_declarations,
+                        compound_statement,
+                    ))
+                }
                 _ => Err(ConversionError::ConversionError(
                     "Unexpected number of pairs under program rule".to_string(),
                 )),
@@ -868,7 +882,7 @@ mod tests {
         };
     }
 
-    test_can_all!(IDENT,mixed_case, "helloWorld");
+    test_can_all!(IDENT, mixed_case, "helloWorld");
 
     test_can_all!(STRING_LITERAL, empty, "''");
     test_can_all!(STRING_LITERAL, simple, "'abc'");
@@ -1031,7 +1045,8 @@ mod tests {
     }
 
     #[test]
-    fn il_factor_from_from_pascal_parser_parse_factor_of_const_string_with_escapes_has_right_type() {
+    fn il_factor_from_from_pascal_parser_parse_factor_of_const_string_with_escapes_has_right_type()
+    {
         let parsed = PascalParser::parse(Rule::factor, "'abc''def'").unwrap();
         let actual = il_factor_from(&parsed.into_iter().next().unwrap()).unwrap();
         assert_eq!(il::Factor::string("abc'def".to_string()), actual);
@@ -1100,22 +1115,29 @@ mod tests {
         assert_eq!(n_minus_1, actual);
     }
 
-
     #[test]
     fn parse_program_string_hello_world_returns_valid_il() {
-        let actual = parse_program_string(r#"program helloWorld(output);begin writeLn('Hello, World!') end."#).unwrap();
+        let actual = parse_program_string(
+            r#"program helloWorld(output);begin writeLn('Hello, World!') end."#,
+        )
+        .unwrap();
 
         let expected = il::ProgramExpr::new(
             il::Id::new_from_str("helloWorld").unwrap(),
-            il::IdentifierList::new(il::NonEmptyVec::single(il::Id::new_from_str("output").unwrap())),
+            il::IdentifierList::new(il::NonEmptyVec::single(
+                il::Id::new_from_str("output").unwrap(),
+            )),
             il::DeclarationsExpr::empty(),
             il::SubprogramDeclarations::empty(),
-            il::CompoundStatement::new(vec![il::Statement::procedure(il::ProcedureStatement::with_params(
-                il::Id::new_from_str("writeLn").unwrap(),
-                il::ExpressionList::new(
-                    il::NonEmptyVec::new(vec![il::Expression::simple(il::SimpleExpression::term(
-                        il::Term::factor(il::Factor::string("Hello, World!".to_string())),
-                    ))])
+            il::CompoundStatement::new(vec![il::Statement::procedure(
+                il::ProcedureStatement::with_params(
+                    il::Id::new_from_str("writeLn").unwrap(),
+                    il::ExpressionList::new(
+                        il::NonEmptyVec::new(vec![il::Expression::simple(
+                            il::SimpleExpression::term(il::Term::factor(il::Factor::string(
+                                "Hello, World!".to_string(),
+                            ))),
+                        )])
                         .unwrap(),
                 ),
             ),
@@ -1147,22 +1169,32 @@ mod tests {
                         else
                           writeln(i)
                     end.
-                "#).unwrap();
+                "#,
+        )
+        .unwrap();
 
         // Just a smoke test for now (parsing not failing is already a good sign)
         assert_eq!(il::Id::new_from_str("fizzbuzz").unwrap(), actual.id);
-        assert_eq!(DeclarationsExpr::new(vec![
-            il::VarDeclaration::new(
-                il::IdentifierList::new(
-                    il::NonEmptyVec::single(il::Id::new_from_str("i").unwrap())),
-                il::Type::standard(il::StandardType::Integer)),
-        ]), actual.declarations);
+        assert_eq!(
+            DeclarationsExpr::new(vec![il::VarDeclaration::new(
+                il::IdentifierList::new(il::NonEmptyVec::single(
+                    il::Id::new_from_str("i").unwrap()
+                )),
+                il::Type::standard(il::StandardType::Integer)
+            ),]),
+            actual.declarations
+        );
 
         let il::CompoundStatement(stmts) = actual.compound_statement;
 
-        assert_eq!(il::Statement::assignment(il::AssignmentStatement::new(
-            il::Variable::id(il::Id::new_from_str("i").unwrap()),
-            il::Expression::simple(il::SimpleExpression::term(il::Term::factor(il::Factor::number(1)))))),
-                   stmts[0]);
+        assert_eq!(
+            il::Statement::assignment(il::AssignmentStatement::new(
+                il::Variable::id(il::Id::new_from_str("i").unwrap()),
+                il::Expression::simple(il::SimpleExpression::term(il::Term::factor(
+                    il::Factor::number(1)
+                )))
+            )),
+            stmts[0]
+        );
     }
 }
