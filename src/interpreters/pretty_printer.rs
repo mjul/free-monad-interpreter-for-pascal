@@ -501,17 +501,6 @@ fn print_program_from_compound_statement<TNext>(
     )
 }
 
-fn print_program_surround<TNext>(
-    header_k: PrintProgram<TNext>,
-    body_k: PrintProgram<TNext>,
-    tail_k: PrintProgram<TNext>,
-) -> PrintProgram<TNext>
-    where
-        TNext: Default,
-{
-    PrintProgram::stop()
-}
-
 /// Build a print program from a slice of `T`s
 /// and functions to build the elements of the slice and
 /// the interposed elements.
