@@ -879,10 +879,12 @@ mod tests {
 
     test_can_all!(statement, assignment_constant, "x:=1");
     test_can_all!(statement, assignment_function_call, "x:=fib(n-1)");
+    test_can_all!(statement, assignment_function_calls, "fib:=fib(n-1)+fib(n-2)");
     test_can_all!(statement, procedure_statement, "writeLn('Hello, World!')");
     test_can_all!(statement, compound_statement, "begin x:=1;y:=2 end");
     test_can_all!(statement, if_then_else, "if x>10 then x:=10 else x:=x");
     test_can_all!(statement, if_then_else_composite_cond, "if i mod 3 = 0 then x else y");
+    test_can_all!(statement, if_then_else_fib_example, "if (n <= 2) then fib := 1 else fib := fib(n-1) + fib(n-2)");
     test_can_all!(statement, while_less_than, "while x<10 do x:=x+1");
     test_can_all!(statement, while_leq, "while x<=10 do x:=x+1");
 
@@ -908,6 +910,7 @@ mod tests {
     test_can_all!(simple_expression, sign_term, "-x");
     test_can_all!(simple_expression, add_op_1, "x + y");
     test_can_all!(simple_expression, add_op_2, "-x + y - z");
+    test_can_all!(simple_expression, add_op_plus_and_minus, "fib(n-1)+fib(n-2)");
 
     test_can_all!(term, factor, "x");
     test_can_all!(term, mulop_single, "2*x");
