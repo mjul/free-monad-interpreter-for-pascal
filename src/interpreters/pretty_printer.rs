@@ -1115,6 +1115,29 @@ mod tests {
     }
 
     #[test]
+    fn print_program_from_compound_statement_with_multiple_statements_should_print() {
+        let cs = CompoundStatement::new(vec![
+            Statement::assignment(AssignmentStatement::new(
+                Variable::id(Id::new_from_str("x").unwrap()),
+                Expression::simple(SimpleExpression::term(Term::factor(Factor::number(1)))),
+            )),
+            Statement::assignment(AssignmentStatement::new(
+                Variable::id(Id::new_from_str("y").unwrap()),
+                Expression::simple(SimpleExpression::term(Term::factor(Factor::number(2)))),
+            )),
+        ]);
+        let pl = print_program_from_compound_statement(&cs, PrintProgram::stop());
+        let actual = run_interpreter(&pl);
+        assert_eq!(r#"
+begin
+  x := 1;
+  y := 2
+end
+"#.trim(),
+                   actual);
+    }
+
+    #[test]
     fn pretty_print_hello_world() {
         let p = examples::hello_world();
         let actual = pretty_print(p, 2);
