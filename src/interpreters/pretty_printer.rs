@@ -253,10 +253,10 @@ fn print_program_from_pascal<TNext>(pascal: &PascalExpr) -> PrintProgram<TNext>
 {
     match pascal {
         PascalExpr::Program(p) => print_program_from_program(p),
-        PascalExpr::IdentifierList(_il) => todo!(),
-        PascalExpr::Declarations(_ds) => todo!(),
-        PascalExpr::SubprogramDeclarations(_sd) => todo!(),
-        PascalExpr::CompoundStatement(_cs) => todo!(),
+        PascalExpr::IdentifierList(il) => print_program_from_identifier_list(il, PrintProgram::stop()),
+        PascalExpr::Declarations(ds) => print_program_from_declarations(ds, PrintProgram::stop()),
+        PascalExpr::SubprogramDeclarations(sd) => print_program_from_subprogram_declarations(sd, PrintProgram::stop()),
+        PascalExpr::CompoundStatement(cs) => print_program_from_compound_statement(cs, PrintProgram::stop()),
     }
 }
 
