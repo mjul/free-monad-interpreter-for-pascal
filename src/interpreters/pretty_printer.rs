@@ -248,21 +248,27 @@ impl PrettyPrintContext {
 
 /// Translate the Pascal expression into a print-language expression.
 fn print_program_from_pascal<TNext>(pascal: &PascalExpr) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+where
+    TNext: Default,
 {
     match pascal {
-        PascalExpr::Program(p) => print_program_from_program(p),
-        PascalExpr::IdentifierList(il) => print_program_from_identifier_list(il, PrintProgram::stop()),
+        PascalExpr::Program(p) => print_program_from_program(p, PrintProgram::stop()),
+        PascalExpr::IdentifierList(il) => {
+            print_program_from_identifier_list(il, PrintProgram::stop())
+        }
         PascalExpr::Declarations(ds) => print_program_from_declarations(ds, PrintProgram::stop()),
-        PascalExpr::SubprogramDeclarations(sd) => print_program_from_subprogram_declarations(sd, PrintProgram::stop()),
-        PascalExpr::CompoundStatement(cs) => print_program_from_compound_statement(cs, PrintProgram::stop()),
+        PascalExpr::SubprogramDeclarations(sd) => {
+            print_program_from_subprogram_declarations(sd, PrintProgram::stop())
+        }
+        PascalExpr::CompoundStatement(cs) => {
+            print_program_from_compound_statement(cs, PrintProgram::stop())
+        }
     }
 }
 
-fn print_program_from_program<TNext>(p: &ProgramExpr) -> PrintProgram<TNext>
-    where
-        TNext: Default,
+fn print_program_from_program<TNext>(p: &ProgramExpr, k: PrintProgram<TNext>) -> PrintProgram<TNext>
+where
+    TNext: Default,
 {
     match p {
         ProgramExpr {
@@ -283,7 +289,7 @@ fn print_program_from_program<TNext>(p: &ProgramExpr) -> PrintProgram<TNext>
                             subprogram_declarations,
                             print_program_from_compound_statement(
                                 compound_statement,
-                                PrintProgram::write(".".to_string(), PrintProgram::stop()),
+                                PrintProgram::write(".".to_string(), k),
                             ),
                         ),
                     ),
