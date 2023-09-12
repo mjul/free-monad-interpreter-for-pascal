@@ -152,8 +152,8 @@ impl<TNext> Debug for PrintInstruction<TNext> {
 /// In Haskell the type signatures are:
 /// `Pure :: a -> Free f a`
 /// `Free :: f (Free f a) -> Free f a`
-
-// TODO: consider using the Result type to get a lot of functions for free
+// PrintProgram is structurally similar to the `Result` type.
+// Consider using `Result` as an implementation detail to get a lot of functions for free.
 enum PrintProgram<T> {
     Stop(T),
     KeepGoing(PrintInstruction<PrintProgram<T>>),
@@ -1190,7 +1190,7 @@ end."#
     fn pretty_print_fizzbuzz() {
         let p = examples::fizzbuzz();
         let actual = pretty_print(p, 2);
-        // TODO: elaborate this, for now it is just a smoke test
+        // This is just a smoke test
         assert!(actual.contains("program fizzbuzz(output);"));
         assert!(actual.contains("var"));
         assert!(actual.contains("i : integer;"));
