@@ -23,7 +23,6 @@ pub(crate) fn hello_world() -> ProgramExpr {
         DeclarationsExpr::empty(),
         SubprogramDeclarations::empty(),
         CompoundStatement::new(vec![Statement::procedure(ProcedureStatement::with_params(
-            // TODO: consider using an enum for the built-in procedures like writeLn
             Id::new_from_str("writeLn").unwrap(),
             ExpressionList::new(
                 NonEmptyVec::new(vec![Expression::simple(SimpleExpression::term(
